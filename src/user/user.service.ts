@@ -6,14 +6,11 @@ import { User }  from "./user";
 
 
 export class UserService {
-    userLsit = [];
-    admin = new User("admin");
+    userLsit = new Map();
     roomLsit = [];
     gameLsit = [];
-    socketLsit = [];
-    constructor() {
-        this.userLsit[this.admin.name] = this.admin;
-    }
+    socketLsit = new Map();
+    constructor() { }
 
     login(socket, name) {
         this.socketLsit[socket.id] = name;
@@ -24,19 +21,22 @@ export class UserService {
         } else {
             console.log(Date().toString().slice(15, 25), "新建", name);
             this.userLsit[name] = new User(name);
+            this.roomLsit.push(this.userLsit[name]);
             return "欢迎加入";
         }
+
     }
 
 
-    logout(name) {
-
-        console.log(Date().toString().slice(15, 25), "离线", name);
-
-        this.userLsit[name].isOnline = false;
-        return "欢迎归来";
-
-
+    logout(socketId) {
+        console.log(this.socketLsit[socketId]);
+        if (this.socketLsit[socketId]) {
+            this.userLsit[this.socketLsit[socketId]].isOnline = false;
+            this.socketLsit.delete(socketId);
+            return this.socketLsit[socketId] + "离线";
+        } else {
+            return "未登录用户离线";
+        }
     }
     joinRoom(name) { }
     joinGame(name) { }
@@ -46,6 +46,8 @@ export class UserService {
 
 
     }
+
+
 
 
 }

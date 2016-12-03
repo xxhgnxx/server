@@ -12,8 +12,21 @@
 
 let io = require("socket.io").listen(81);
 import { UserService } from "./user";
-
+import { Game } from "./game/game";
+import { User } from "./user/user";
 let userService = new UserService();
+class Data {
+
+    constructor(
+        private type: string,
+        private name?: string,
+        private userLsit?: Array<string>,
+        private msg?: string,
+        private user?: User,
+    ) { }
+
+}
+
 
 class Msg {
 
@@ -24,31 +37,54 @@ class Msg {
 io.on("connection", socket => {
 
     console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
-
-
-
-    socket.on("login", (socket, name) => {
+    socket.on("login", (name) => {
 
         console.log(Date().toString().slice(15, 25), "login", name);
-        io.emit("loginSuccess", userService.login(socket, name), name);
+
+
+        console.log(userService.roomLsit[0]);
+
+        io.emit("upDataList", userService.roomLsit);
+        io.emit("loginSuccess", new Data(this.type = "login", this.msg = userService.login(socket, name), this.name = name));
 
 
     });
 
-    socket.on("disconnect", socket => {
-        console.log(socket["name"]);
+    socket.on("disconnect", () => {
+        console.log(socket.id, "离线");
 
-        if (socket["name"]) {
-            userService.logout(socket["name"]);
-            console.log(Date().toString().slice(15, 25), "logout", socket["name"]);
-            socket.emit("system", new Msg("logout", socket["name"]));
-        } else {
-            console.log(Date().toString().slice(15, 25), "未登录logout");
+        Data["msg"] = userService.logout(socket.id);
+        Data["userLsit"] = userService.userLsit;
+        Data["type"] = "logout";
+        io.emit("upDataList", userService.roomLsit);
+        io.emit("system", Data);
+
+
+    });
+
+
+    socket.on("system", (type, data) => {
+
+
+        switch (type) {
+            case "gamestart":
+                console.log("游戏开始");
+
+
+
+                io.emit("system", new Data("gamestart"));
+                break;
+
+            default:
+
         }
 
 
-
     });
+
+
+
+
 
 
 });

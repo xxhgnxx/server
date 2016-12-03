@@ -5,6 +5,13 @@ var User = (function () {
         this.isSurvival = true;
         this.isSeat = false;
         this.seatNo = 0;
+        this.isLastPre = false;
+        this.isLastPrm = false;
+        this.isPre = false;
+        this.isPrm = false;
+        this.isHitler = false;
+        this.isFascist = false;
+        this.name = name;
     }
     User.prototype.userSetNo = function (n) {
         this.seatNo = n;
@@ -14,10 +21,10 @@ var User = (function () {
         this.isSeat = !this.isSeat;
         console.log(this.name, this.isSeat ? "坐下了" : "离开了座位");
     };
-    User.prototype.userOnline = function () {
-        this.isOnline = !this.isOnline;
-        console.log(this.name, this.isOnline ? "上线了" : "离线了");
-    };
+    // userOnline() {
+    //     this.isOnline = !this.isOnline;
+    //     console.log(this.name, this.isOnline ? "上线了" : "离线了");
+    // }
     User.prototype.userSurvival = function () {
         this.isSurvival = !this.isSurvival;
         console.log(this.name, this.isOnline ? "挂了" : "复活了？！");

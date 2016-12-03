@@ -2,12 +2,10 @@
 var user_1 = require("./user");
 var UserService = (function () {
     function UserService() {
-        this.userLsit = [];
-        this.admin = new user_1.User("admin");
+        this.userLsit = new Map();
         this.roomLsit = [];
         this.gameLsit = [];
-        this.socketLsit = [];
-        this.userLsit[this.admin.name] = this.admin;
+        this.socketLsit = new Map();
     }
     UserService.prototype.login = function (socket, name) {
         this.socketLsit[socket.id] = name;
@@ -19,13 +17,20 @@ var UserService = (function () {
         else {
             console.log(Date().toString().slice(15, 25), "新建", name);
             this.userLsit[name] = new user_1.User(name);
+            this.roomLsit.push(this.userLsit[name]);
             return "欢迎加入";
         }
     };
-    UserService.prototype.logout = function (name) {
-        console.log(Date().toString().slice(15, 25), "离线", name);
-        this.userLsit[name].isOnline = false;
-        return "欢迎归来";
+    UserService.prototype.logout = function (socketId) {
+        console.log(this.socketLsit[socketId]);
+        if (this.socketLsit[socketId]) {
+            this.userLsit[this.socketLsit[socketId]].isOnline = false;
+            this.socketLsit.delete(socketId);
+            return this.socketLsit[socketId] + "离线";
+        }
+        else {
+            return "未登录用户离线";
+        }
     };
     UserService.prototype.joinRoom = function (name) { };
     UserService.prototype.joinGame = function (name) { };

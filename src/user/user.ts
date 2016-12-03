@@ -5,7 +5,16 @@ export class User {
     seatNo: number = 0;
     name: string;
     password: string;
-    constructor(name: string) { }
+    isLastPre: boolean = false;
+    isLastPrm: boolean = false;
+    isPre: boolean = false;
+    isPrm: boolean = false;
+    isHitler: boolean = false;
+    isFascist: boolean = false;
+
+    constructor(name: string) {
+        this.name = name;
+    }
 
     userSetNo(n) {
         this.seatNo = n;
@@ -17,10 +26,10 @@ export class User {
         console.log(this.name, this.isSeat ? "坐下了" : "离开了座位");
     }
 
-    userOnline() {
-        this.isOnline = !this.isOnline;
-        console.log(this.name, this.isOnline ? "上线了" : "离线了");
-    }
+    // userOnline() {
+    //     this.isOnline = !this.isOnline;
+    //     console.log(this.name, this.isOnline ? "上线了" : "离线了");
+    // }
 
     userSurvival() {
         this.isSurvival = !this.isSurvival;
