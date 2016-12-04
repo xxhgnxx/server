@@ -1,42 +1,53 @@
 "use strict";
 var user_1 = require("./user");
+var server_1 = require("../server");
 var UserService = (function () {
     function UserService() {
-        this.userLsit = new Map();
-        this.roomLsit = [];
-        this.gameLsit = [];
-        this.socketLsit = new Map();
+        this.userLsit = new Array();
+        this.gameLsit = new Array();
+        this.socketIdToUser = new Map();
     }
-    UserService.prototype.login = function (socket, name) {
-        this.socketLsit[socket.id] = name;
-        if (this.userLsit[name]) {
+    UserService.prototype.login = function (socketId, name) {
+        var me = this.userLsit.filter(function (t) { return t.name === name; })[0];
+        if (me) {
             console.log(Date().toString().slice(15, 25), "返回", name);
-            this.userLsit[name].isOnline = true;
-            return "欢迎归来";
+            this.socketIdToUser[socketId] = me;
+            this.socketIdToUser[socketId].isOnline = true;
+            return this.socketIdToUser[socketId].name + "欢迎归来";
         }
         else {
-            console.log(Date().toString().slice(15, 25), "新建", name);
-            this.userLsit[name] = new user_1.User(name);
-            this.roomLsit.push(this.userLsit[name]);
+            console.log(Date().toString().slice(15, 25), "用户新加入", name);
+            this.socketIdToUser[socketId] = new user_1.User(name);
+            this.userLsit.push(this.socketIdToUser[socketId]);
             return "欢迎加入";
         }
     };
     UserService.prototype.logout = function (socketId) {
-        console.log(this.socketLsit[socketId]);
-        if (this.socketLsit[socketId]) {
-            this.userLsit[this.socketLsit[socketId]].isOnline = false;
-            this.socketLsit.delete(socketId);
-            return this.socketLsit[socketId] + "离线";
+        if (this.socketIdToUser[socketId]) {
+            this.socketIdToUser[socketId].isOnline = false;
+            this.socketIdToUser.delete(socketId);
+            console.log(Date().toString().slice(15, 25), this.socketIdToUser[socketId].name, "离线");
+            return this.socketIdToUser[socketId].name + "离线";
         }
         else {
+            console.log(Date().toString().slice(15, 25), "未登录用户离线");
             return "未登录用户离线";
+        }
+    };
+    UserService.prototype.userSeat = function (socketId, name) {
+        if (this.socketIdToUser[socketId].isSeat) {
+            this.socketIdToUser[socketId].isSeat = false;
+            server_1.game.userList.splice(server_1.game.userList.indexOf(this.socketIdToUser[socketId]), 1);
+            return "站起来" + name;
+        }
+        else {
+            this.socketIdToUser[socketId].isSeat = true;
+            server_1.game.userList.push(this.socketIdToUser[socketId]);
+            return "坐下了" + name;
         }
     };
     UserService.prototype.joinRoom = function (name) { };
     UserService.prototype.joinGame = function (name) { };
-    UserService.prototype.upDataList = function () {
-        return this.userLsit;
-    };
     return UserService;
 }());
 exports.UserService = UserService;

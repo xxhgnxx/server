@@ -1,28 +1,16 @@
-// var path = require("path");
-// var express = require("express");
-// var app = express();
-// var server = require("http").createServer(app);
-// console.log(path.resolve("dist"));
-//
-// app.use("/", express.static(path.resolve("dist")));
-// server.listen(80);
-//
-//
-
-
 let io = require("socket.io").listen(81);
 import { UserService } from "./user";
 import { Game } from "./game/game";
-import { User } from "./user/user";
-let userService = new UserService();
+import { User } from "./user";
+export let userService = new UserService();
+export let game: Game;
 class Data {
-
+    type: string;
+    name: string;
+    msg: string;
+    user: User;
     constructor(
-        private type: string,
-        private name?: string,
-        private userLsit?: Array<string>,
-        private msg?: string,
-        private user?: User,
+        private userLsit = userService.userLsit
     ) { }
 
 }
@@ -33,58 +21,65 @@ class Msg {
     constructor(public msg: string, public obj?: string, public data?: string) { }
 }
 
-
 io.on("connection", socket => {
 
     console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
     socket.on("login", (name) => {
-
-        console.log(Date().toString().slice(15, 25), "login", name);
-
-
-        console.log(userService.roomLsit[0]);
-
-        io.emit("upDataList", userService.roomLsit);
-        io.emit("loginSuccess", new Data(this.type = "login", this.msg = userService.login(socket, name), this.name = name));
-
+        let dataOut = new Data();
+        dataOut.type = "loginSuccess";
+        dataOut.msg = userService.login(socket.id, name);
+        dataOut.name = name;
+        io.emit("system", dataOut);
 
     });
 
     socket.on("disconnect", () => {
-        console.log(socket.id, "离线");
-
-        Data["msg"] = userService.logout(socket.id);
-        Data["userLsit"] = userService.userLsit;
-        Data["type"] = "logout";
-        io.emit("upDataList", userService.roomLsit);
-        io.emit("system", Data);
-
-
+        console.log(Date().toString().slice(15, 25), socket.id, "离线");
+        let dataOut = new Data();
+        dataOut.type = "logout";
+        dataOut.msg = userService.logout(socket.id);
+        io.emit("system", dataOut);
     });
 
+    socket.on("system", data => {
+        console.log("system请求", data);
+        switch (data.type) {
+            case "login":
+                {
+                    console.log(Date().toString().slice(15, 25), "login", name);
+                    let dataOut = new Data();
+                    dataOut.type = "loginSuccess";
+                    dataOut.msg = userService.login(socket.id, name);
+                    dataOut.name = name;
+                    io.emit("system", dataOut);
+                    break;
+                }
+            case "userSeat":
+                {
+                    console.log(Date().toString().slice(15, 25), "坐下", data.name);
 
-    socket.on("system", (type, data) => {
 
-
-        switch (type) {
+                    let dataOut = new Data();
+                    dataOut.msg = userService.userSeat(socket.id, name);
+                    dataOut.type = "userSeat";
+                    io.emit("system", dataOut);
+                    break;
+                }
             case "gamestart":
-                console.log("游戏开始");
-
-
-
-                io.emit("system", new Data("gamestart"));
-                break;
+                {
+                    //////////////////////
+                    console.log(Date().toString().slice(15, 25), "游戏开始");
+                    game = new Game();
+                    this.game.start();
+                    let dataOut = new Data();
+                    dataOut.type = "gamestart";
+                    dataOut.name = userService.socketIdToUser[socket.id];
+                    io.emit("system", dataOut);
+                    break;
+                }
 
             default:
-
         }
-
-
     });
-
-
-
-
-
 
 });
