@@ -11,7 +11,7 @@ export class User {
     isPrm: boolean = false;
     isHitler: boolean = false;
     isFascist: boolean = false;
-
+    role: string = "liberal";
     constructor(name: string) {
         this.name = name;
     }

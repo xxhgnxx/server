@@ -25,6 +25,10 @@ var UserService = (function () {
     UserService.prototype.logout = function (socketId) {
         if (this.socketIdToUser[socketId]) {
             this.socketIdToUser[socketId].isOnline = false;
+            if (!server_1.game.started) {
+                this.socketIdToUser[socketId].isSeat = false;
+                server_1.game.playerList.splice(server_1.game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+            }
             this.socketIdToUser.delete(socketId);
             console.log(Date().toString().slice(15, 25), this.socketIdToUser[socketId].name, "离线");
             return this.socketIdToUser[socketId].name + "离线";
@@ -34,16 +38,16 @@ var UserService = (function () {
             return "未登录用户离线";
         }
     };
-    UserService.prototype.userSeat = function (socketId, name) {
+    UserService.prototype.userSeat = function (socketId) {
         if (this.socketIdToUser[socketId].isSeat) {
             this.socketIdToUser[socketId].isSeat = false;
-            server_1.game.userList.splice(server_1.game.userList.indexOf(this.socketIdToUser[socketId]), 1);
-            return "站起来" + name;
+            server_1.game.playerList.splice(server_1.game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+            return "站起来" + this.socketIdToUser[socketId].name;
         }
         else {
             this.socketIdToUser[socketId].isSeat = true;
-            server_1.game.userList.push(this.socketIdToUser[socketId]);
-            return "坐下了" + name;
+            server_1.game.playerList.push(this.socketIdToUser[socketId]);
+            return "坐下了" + this.socketIdToUser[socketId].name;
         }
     };
     UserService.prototype.joinRoom = function (name) { };
@@ -51,3 +55,28 @@ var UserService = (function () {
     return UserService;
 }());
 exports.UserService = UserService;
+// 测试数据
+exports.userLsitTestdata = [
+    new user_1.User("传说中的第1人"),
+    new user_1.User("我是本届总统"),
+    new user_1.User("上届总理"),
+    new user_1.User("上届总统"),
+    new user_1.User("希特勒"),
+    new user_1.User("-( ゜- ゜)つロ乾杯~"),
+    new user_1.User("这个人的名字有十个字"),
+    new user_1.User("真·皇冠鸟"),
+    new user_1.User("这人被枪毙了"),
+    new user_1.User("第八人"),
+    new user_1.User("阿依吐拉公主"),
+];
+function getdate() {
+    exports.userLsitTestdata[1].isPre = true;
+    exports.userLsitTestdata[2].isLastPrm = true;
+    exports.userLsitTestdata[3].isLastPre = true;
+    exports.userLsitTestdata[8].isSurvival = false;
+    exports.userLsitTestdata[4].isHitler = true;
+    exports.userLsitTestdata[7].isFascist = true;
+    exports.userLsitTestdata[8].isFascist = true;
+    return exports.userLsitTestdata;
+}
+exports.getdate = getdate;
