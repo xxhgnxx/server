@@ -33,7 +33,6 @@ export class Data {
     constructor() { this.userList = userService.userList; }
 }
 
-let socketIdtoSocket = new Map();
 
 class Msg {
 
@@ -41,10 +40,12 @@ class Msg {
 }
 
 io.on("connection", socket => {
+
     console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
+
+
     socket.on("disconnect", () => {
         console.log(Date().toString().slice(15, 25), socket.id, "离线");
-        socketIdtoSocket.delete(socket.id);
         let dataOut = new Data();
         dataOut.type = "logout";
         dataOut.msg = userService.logout(socket.id);
@@ -52,19 +53,17 @@ io.on("connection", socket => {
     });
 
     socket.on("system", data => {
-        console.log("收到客户端发来的system请求", data.type, socket.id);
-        io.emit(data.key);
+        console.log("收到客户端发来的system请求", data);
         switch (data.type) {
             case "login":
                 {
                     console.log(Date().toString().slice(15, 25), "login", data.name);
-                    socketIdtoSocket[socket.id] = socket;
                     let dataOut = new Data();
                     dataOut.type = "loginSuccess";
-                    dataOut.msg = userService.login(socket, data.name);
+                    dataOut.msg = userService.login(socket.id, data.name);
                     dataOut.user = userService.socketIdToUser[socket.id];
                     dataOut.socketId = socket.id;
-                    send(dataOut.user, dataOut);
+                    io.emit("system", dataOut);
                     break;
                 }
             case "userSeat":
@@ -91,13 +90,11 @@ io.on("connection", socket => {
                     dataOut.proIndex = game.proIndex;
                     dataOut.proList = game.proList;
                     dataOut.pre = game.pre;
-                    dataOut.started = game.started;
                     dataOut.prenext = game.prenext;
                     dataOut.voteList = game.voteList;
                     dataOut.name = userService.socketIdToUser[socket.id];
                     dataOut.type = "gamestart";
-                    send(game.playerList, dataOut);
-
+                    io.emit("system", dataOut);
                     break;
                 }
 
@@ -106,19 +103,3 @@ io.on("connection", socket => {
     });
 
 });
-
-function send(who: Array<User> | User, data) {
-    if (Array.isArray(who)) {
-        for (let n in who) {
-            socketIdtoSocket[who[n].socketId].emit("system", data);
-        }
-    } else {
-        socketIdtoSocket[who.socketId].emit("system", data);
-    }
-
-
-
-
-
-
-}

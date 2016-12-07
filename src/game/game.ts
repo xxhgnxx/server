@@ -2,19 +2,21 @@ import { userService } from "../server";
 import { User } from "../user";
 import { Data } from "../server";
 import { getdate } from "../user/user.service";
+import { Vote } from "./vote";
+
 export class Game {
     skillList = new Array<Function | string>();  // 技能列表
     proList = new Array<any>();  // 法案牌堆
     started: boolean = false;       // 游戏是否开始
-    playerList: Array<User> = getdate(); // 加入本次游戏的玩家列表，主要用于消息发送
+    playerList = new Array<User>(); // 加入本次游戏的玩家列表，主要用于消息发送
     proIndex = 16; // 牌堆顶
     proEffBlue = 0; // 法案生效数
     proEffRed = 0; // 法案生效数
     failTimes = 0; // 政府组件失败次数
     fascistCount: number; // 法西斯玩家数量
     liberalCount: number; // 自由党玩家数量
-    voteCount: number; // 投票数
-    voteYes: number; // 投票数
+    voteList: Array<Vote>; // 投票情况
+
     lastPre: User;
     lastPrm: User;
     pre: User;
@@ -32,14 +34,18 @@ export class Game {
             this.setPlayer();
             this.makePro();
             this.Shuffle();
+            this.started = true;
             this.selectPre(this.playerList[Math.floor(Math.random() * this.playerList.length)]);
         }
     }
     setPlayer() {
         console.log("分发玩家身份牌,打乱玩家座位，生成新的顺序");
+        for (let i = 0; i < this.playerList.length; i++) {
+            this.playerList[i].role = "liberal";
+        }
         this.playerList.filter(t => { t.seatNo = Math.random(); });
         this.playerList.sort((a, b) => { return a.seatNo - b.seatNo; });
-        this.playerList[0].role = "hitler";
+        this.playerList[0].role = "Hitler";
         this.playerList[0].isHitler = true;
         for (let i = 1; i <= this.fascistCount; i++) {
             this.playerList[i].role = "Fascist";
@@ -47,6 +53,10 @@ export class Game {
         }
         this.playerList.filter(t => { t.seatNo = Math.random(); });
         this.playerList.sort((a, b) => { return a.seatNo - b.seatNo; });
+        for (let i = 0; i < this.playerList.length; i++) {
+            this.playerList[i].seatNo = i + 1;
+        }
+
     }
 
     makePro() {
@@ -110,13 +120,15 @@ export class Game {
         this.proList.sort((a, b) => {
             return mytmp[a] - mytmp[b];
         });
-        console.log(this.proIndex);
+        console.log(this.proList);
     }
 
     // 选总统，一轮结束后继续游戏的象征
     selectPre(player: User) {
         // if (pre) {pre.canbeselect="true";};
+        this.playerList.filter(t => { t.isPre = false; });
         this.pre = player;
+        this.pre.isPre = true;
         if (this.playerList[this.playerList.indexOf(player) + 1]) {
             this.prenext = this.playerList[this.playerList.indexOf(player) + 1];
         } else {
@@ -125,14 +137,18 @@ export class Game {
         console.log("本届总统是", this.pre.name);
         console.log("下届总统是", this.prenext.name);
         // 投票数归零
-        this.voteCount = 0;
-        this.voteYes = 0;
+
+
     }
 
 
     setPrm() { }
     effPro() { }
-    vote() { }
+    // 发起投票
+    vote() {
+        this.voteList.push(new Vote(this.playerList));
+
+    }
     preSelect() { }
     prmSelect() { }
     proSelect() { }

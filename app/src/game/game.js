@@ -1,11 +1,11 @@
 "use strict";
-var user_service_1 = require("../user/user.service");
+var vote_1 = require("./vote");
 var Game = (function () {
     function Game() {
         this.skillList = new Array(); // 技能列表
         this.proList = new Array(); // 法案牌堆
         this.started = false; // 游戏是否开始
-        this.playerList = user_service_1.getdate(); // 加入本次游戏的玩家列表，主要用于消息发送
+        this.playerList = new Array(); // 加入本次游戏的玩家列表，主要用于消息发送
         this.proIndex = 16; // 牌堆顶
         this.proEffBlue = 0; // 法案生效数
         this.proEffRed = 0; // 法案生效数
@@ -21,14 +21,18 @@ var Game = (function () {
             this.setPlayer();
             this.makePro();
             this.Shuffle();
+            this.started = true;
             this.selectPre(this.playerList[Math.floor(Math.random() * this.playerList.length)]);
         }
     };
     Game.prototype.setPlayer = function () {
         console.log("分发玩家身份牌,打乱玩家座位，生成新的顺序");
+        for (var i = 0; i < this.playerList.length; i++) {
+            this.playerList[i].role = "liberal";
+        }
         this.playerList.filter(function (t) { t.seatNo = Math.random(); });
         this.playerList.sort(function (a, b) { return a.seatNo - b.seatNo; });
-        this.playerList[0].role = "hitler";
+        this.playerList[0].role = "Hitler";
         this.playerList[0].isHitler = true;
         for (var i = 1; i <= this.fascistCount; i++) {
             this.playerList[i].role = "Fascist";
@@ -36,6 +40,9 @@ var Game = (function () {
         }
         this.playerList.filter(function (t) { t.seatNo = Math.random(); });
         this.playerList.sort(function (a, b) { return a.seatNo - b.seatNo; });
+        for (var i = 0; i < this.playerList.length; i++) {
+            this.playerList[i].seatNo = i + 1;
+        }
     };
     Game.prototype.makePro = function () {
         // 法案牌生成
@@ -98,12 +105,14 @@ var Game = (function () {
         this.proList.sort(function (a, b) {
             return mytmp[a] - mytmp[b];
         });
-        console.log(this.proIndex);
+        console.log(this.proList);
     };
     // 选总统，一轮结束后继续游戏的象征
     Game.prototype.selectPre = function (player) {
         // if (pre) {pre.canbeselect="true";};
+        this.playerList.filter(function (t) { t.isPre = false; });
         this.pre = player;
+        this.pre.isPre = true;
         if (this.playerList[this.playerList.indexOf(player) + 1]) {
             this.prenext = this.playerList[this.playerList.indexOf(player) + 1];
         }
@@ -114,12 +123,13 @@ var Game = (function () {
         console.log("本届总统是", this.pre.name);
         console.log("下届总统是", this.prenext.name);
         // 投票数归零
-        this.voteCount = 0;
-        this.voteYes = 0;
     };
     Game.prototype.setPrm = function () { };
     Game.prototype.effPro = function () { };
-    Game.prototype.vote = function () { };
+    // 发起投票
+    Game.prototype.vote = function () {
+        this.voteList.push(new vote_1.Vote(this.playerList));
+    };
     Game.prototype.preSelect = function () { };
     Game.prototype.prmSelect = function () { };
     Game.prototype.proSelect = function () { };

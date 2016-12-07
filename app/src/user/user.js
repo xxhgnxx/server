@@ -11,7 +11,7 @@ var User = (function () {
         this.isPrm = false;
         this.isHitler = false;
         this.isFascist = false;
-        this.role = "liberal";
+        this.role = "x";
         this.name = name;
     }
     User.prototype.userSetNo = function (n) {

@@ -6,22 +6,26 @@ import { game } from "../server";
 
 
 export class UserService {
-    userLsit = new Array<User>();
-    gameLsit = new Array<User>();
+    userList = new Array<User>();
+    gamelist = new Array<User>();
     socketIdToUser = new Map<string, User>();
+
     constructor() { }
 
-    login(socketId, name) {
-        let me = this.userLsit.filter(t => { return t.name === name; })[0];
+    login(socket, name) {
+        let me = this.userList.filter(t => { return t.name === name; })[0];
         if (me) {
             console.log(Date().toString().slice(15, 25), "返回", name);
-            this.socketIdToUser[socketId] = me;
-            this.socketIdToUser[socketId].isOnline = true;
-            return this.socketIdToUser[socketId].name + "欢迎归来";
+            this.socketIdToUser[socket.id] = me;
+            this.socketIdToUser[socket.id].isOnline = true;
+            this.socketIdToUser[socket.id].socketId = socket.id;
+            return this.socketIdToUser[socket.id].name + "欢迎归来";
         } else {
             console.log(Date().toString().slice(15, 25), "用户新加入", name);
-            this.socketIdToUser[socketId] = new User(name);
-            this.userLsit.push(this.socketIdToUser[socketId]);
+            this.socketIdToUser[socket.id] = new User(name);
+            this.socketIdToUser[socket.id].socketId = socket.id;
+            this.userList.push(this.socketIdToUser[socket.id]);
+            let tmp = this.userSeat(socket.id); // 测试用
             return "欢迎加入";
         }
     }
@@ -68,11 +72,11 @@ export class UserService {
 
 
 // 测试数据
-export let userLsitTestdata: User[] = [
+export let userListTestdata: User[] = [
     new User("传说中的第1人"),
     new User("我是本届总统"),
-    new User("上届总理"),
-    new User("上届总统"),
+    new User("玩家K"),
+    new User("微波史密斯"),
     new User("希特勒"),
     new User("-( ゜- ゜)つロ乾杯~"),
     new User("这个人的名字有十个字"),
@@ -85,14 +89,11 @@ export let userLsitTestdata: User[] = [
 
 
 export function getdate() {
-    userLsitTestdata[1].isPre = true;
-    userLsitTestdata[2].isLastPrm = true;
-    userLsitTestdata[3].isLastPre = true;
-    userLsitTestdata[8].isSurvival = false;
-    userLsitTestdata[4].isHitler = true;
-    userLsitTestdata[7].isFascist = true;
-    userLsitTestdata[8].isFascist = true;
+
+    userListTestdata[8].isSurvival = false;
+    userListTestdata[4].isOnline = false;
 
 
-    return userLsitTestdata;
+
+    return userListTestdata;
 }

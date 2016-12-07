@@ -1,4 +1,5 @@
 export class User {
+    socketId: string;
     isOnline: boolean = true;
     isSurvival: boolean = true;
     isSeat: boolean = false;
@@ -11,7 +12,7 @@ export class User {
     isPrm: boolean = false;
     isHitler: boolean = false;
     isFascist: boolean = false;
-    role: string = "liberal";
+    role: string = "x";
     constructor(name: string) {
         this.name = name;
     }

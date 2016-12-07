@@ -3,22 +3,25 @@ var user_1 = require("./user");
 var server_1 = require("../server");
 var UserService = (function () {
     function UserService() {
-        this.userLsit = new Array();
-        this.gameLsit = new Array();
+        this.userList = new Array();
+        this.gamelist = new Array();
         this.socketIdToUser = new Map();
     }
-    UserService.prototype.login = function (socketId, name) {
-        var me = this.userLsit.filter(function (t) { return t.name === name; })[0];
+    UserService.prototype.login = function (socket, name) {
+        var me = this.userList.filter(function (t) { return t.name === name; })[0];
         if (me) {
             console.log(Date().toString().slice(15, 25), "返回", name);
-            this.socketIdToUser[socketId] = me;
-            this.socketIdToUser[socketId].isOnline = true;
-            return this.socketIdToUser[socketId].name + "欢迎归来";
+            this.socketIdToUser[socket.id] = me;
+            this.socketIdToUser[socket.id].isOnline = true;
+            this.socketIdToUser[socket.id].socketId = socket.id;
+            return this.socketIdToUser[socket.id].name + "欢迎归来";
         }
         else {
             console.log(Date().toString().slice(15, 25), "用户新加入", name);
-            this.socketIdToUser[socketId] = new user_1.User(name);
-            this.userLsit.push(this.socketIdToUser[socketId]);
+            this.socketIdToUser[socket.id] = new user_1.User(name);
+            this.socketIdToUser[socket.id].socketId = socket.id;
+            this.userList.push(this.socketIdToUser[socket.id]);
+            var tmp = this.userSeat(socket.id); // 测试用
             return "欢迎加入";
         }
     };
@@ -56,11 +59,11 @@ var UserService = (function () {
 }());
 exports.UserService = UserService;
 // 测试数据
-exports.userLsitTestdata = [
+exports.userListTestdata = [
     new user_1.User("传说中的第1人"),
     new user_1.User("我是本届总统"),
-    new user_1.User("上届总理"),
-    new user_1.User("上届总统"),
+    new user_1.User("玩家K"),
+    new user_1.User("微波史密斯"),
     new user_1.User("希特勒"),
     new user_1.User("-( ゜- ゜)つロ乾杯~"),
     new user_1.User("这个人的名字有十个字"),
@@ -70,13 +73,8 @@ exports.userLsitTestdata = [
     new user_1.User("阿依吐拉公主"),
 ];
 function getdate() {
-    exports.userLsitTestdata[1].isPre = true;
-    exports.userLsitTestdata[2].isLastPrm = true;
-    exports.userLsitTestdata[3].isLastPre = true;
-    exports.userLsitTestdata[8].isSurvival = false;
-    exports.userLsitTestdata[4].isHitler = true;
-    exports.userLsitTestdata[7].isFascist = true;
-    exports.userLsitTestdata[8].isFascist = true;
-    return exports.userLsitTestdata;
+    exports.userListTestdata[8].isSurvival = false;
+    exports.userListTestdata[4].isOnline = false;
+    return exports.userListTestdata;
 }
 exports.getdate = getdate;
