@@ -1,18 +1,38 @@
 import { User } from "../user/user";
-export class Vote {
-    votes = Array();
+export class VoteSys {
+    voteList = new Array<Array<number>>();
+    votes = new Array<number>();
     count: number;
-    constructor(list: Array<User>) {
+
+    setNewVote(list: Array<User>) {
+        let votes = new Array<number>();
         for (let i = 0; i < list.length; i++) {
             if (list[i].isSurvival) {
-                this.votes[list[i].seatNo] = "";
+                votes[list[i].seatNo] = 0;
             }
         }
         this.count = 0;
+        this.voteList.push(votes);
+        this.votes = votes;
     }
-    getVote(no, res) {
-        this.votes[no] = res;
+
+    getVote(seatNo: number, res): boolean {
+        this.votes[seatNo] = res;
         this.count = this.count + 1;
-        return this.count === this.votes.length;
+        if (this.count === this.votes.length) {
+            return true;
+        } else {
+            return false;
+        }
     }
+
+    getRes(seatNo: number, res): number {
+        let tmp = 0;
+        for (let i = 0; i < this.votes.length; i++) {
+            tmp = tmp + this.votes[i];
+        }
+        return tmp;
+    }
+
+
 }

@@ -1,15 +1,16 @@
 "use strict";
-var vote_1 = require("./vote");
 var Game = (function () {
     function Game() {
         this.skillList = new Array(); // 技能列表
         this.proList = new Array(); // 法案牌堆
+        this.proIndex = 16; // 牌堆顶
         this.started = false; // 游戏是否开始
         this.playerList = new Array(); // 加入本次游戏的玩家列表，主要用于消息发送
-        this.proIndex = 16; // 牌堆顶
         this.proEffBlue = 0; // 法案生效数
         this.proEffRed = 0; // 法案生效数
         this.failTimes = 0; // 政府组件失败次数
+        this.voteList = new Array(); // 投票总记录
+        this.voteRes = 0; // 投票结果
     }
     Game.prototype.start = function () {
         if (this.playerList.length < 5) {
@@ -20,9 +21,8 @@ var Game = (function () {
             this.selectGame();
             this.setPlayer();
             this.makePro();
-            this.Shuffle();
+            this.shuffle();
             this.started = true;
-            this.selectPre(this.playerList[Math.floor(Math.random() * this.playerList.length)]);
         }
     };
     Game.prototype.setPlayer = function () {
@@ -94,7 +94,7 @@ var Game = (function () {
     };
     Game.prototype.setPro = function () { };
     // 提案牌洗牌
-    Game.prototype.Shuffle = function () {
+    Game.prototype.shuffle = function () {
         console.log("提案洗牌");
         this.proIndex = this.proList.length - 1; // 牌堆顶
         var mytmp = new Array();
@@ -124,11 +124,64 @@ var Game = (function () {
         console.log("下届总统是", this.prenext.name);
         // 投票数归零
     };
-    Game.prototype.setPrm = function () { };
+    // 设定总理
+    Game.prototype.setPrm = function (user) {
+        this.prm = this.playerList.filter(function (t) { return t.socketId === user.socketId; })[0];
+        this.prm.isPrm = true;
+    };
     Game.prototype.effPro = function () { };
     // 发起投票
-    Game.prototype.vote = function () {
-        this.voteList.push(new vote_1.Vote(this.playerList));
+    Game.prototype.setVote = function () {
+        var tmp = new Array();
+        for (var i = 0; i < this.playerList.length; i++) {
+            if (this.playerList[i].isSurvival) {
+                tmp[this.playerList[i].seatNo - 1] = 0;
+            }
+        }
+        this.voteList.push(tmp);
+        this.nowVote = tmp;
+        this.voteCount = 0;
+        this.voteRes = 0;
+    };
+    // 结算投票
+    Game.prototype.getVote = function (seatNo, res) {
+        this.nowVote[seatNo] = res;
+        this.voteCount = this.voteCount + 1;
+        if (this.voteCount === this.nowVote.length) {
+            for (var i = 0; i < this.nowVote.length; i++) {
+                this.voteRes = this.voteRes + this.nowVote[i];
+            }
+            return true;
+        }
+        else {
+            console.log("投票记录", this.voteCount + "/" + this.nowVote.length);
+            return false;
+        }
+    };
+    // 选法案，list为空则为总统，list有内容则为总理
+    Game.prototype.findPro = function (list) {
+        if (!list) {
+            console.log("总统选提案");
+            var proTmp = [];
+            console.log("牌堆顶位置编号" + this.proIndex);
+            if (this.proIndex < 2) {
+                console.log("牌堆数量不足");
+                this.shuffle();
+            }
+            // 摸牌
+            for (var n = this.proIndex; n >= this.proIndex - 2; n--) {
+                proTmp.push(this.proList[n]);
+            }
+            ;
+            this.proIndex = this.proIndex - 3; // 摸三张后牌堆顶变换
+            this.proX3List = proTmp;
+            console.log("摸牌之后牌堆顶位置编号" + this.proIndex);
+            console.log("待选法案堆" + proTmp);
+        }
+        else {
+            this.proX3List = list;
+            console.log("总理选提案");
+        }
     };
     Game.prototype.preSelect = function () { };
     Game.prototype.prmSelect = function () { };
