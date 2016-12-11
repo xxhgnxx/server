@@ -122,6 +122,11 @@ io.on("connection", function (socket) {
                     }
                     break;
                 }
+            case "proSelect":
+                {
+                    proSelect(data.pro, data.proX3List);
+                    break;
+                }
             default:
                 console.log(Date().toString().slice(15, 25), "神秘的未定义请求");
         }
@@ -149,6 +154,37 @@ function findPro(list) {
     send(tmp, dataOut);
     dataOut.proX3List = exports.game.proX3List;
     send(exports.game.pre, dataOut);
+}
+function proSelect(proDiscard, list) {
+    var dataOut = new Data();
+    if (exports.game.proSelect(proDiscard, list)) {
+        console.log("法案生效");
+        dataOut.type = "proEff";
+        dataOut.pro = exports.game.pro;
+        send(exports.game.playerList, dataOut);
+        if (exports.game.started) {
+            console.log("通知选总理");
+            var dataOut_1 = new Data();
+            dataOut_1.playerList = exports.game.playerList;
+            dataOut_1.pre = exports.game.pre;
+            dataOut_1.prenext = exports.game.prenext;
+            dataOut_1.type = "selectPrm";
+            dataOut_1.pre = exports.game.pre;
+            send(exports.game.playerList, dataOut_1);
+        }
+        else {
+            console.log("游戏结束");
+        }
+    }
+    else {
+        console.log("告知总理选法案");
+        var tmp = exports.game.playerList.filter(function (t) {
+            return t.isPrm !== true;
+        });
+        send(tmp, dataOut);
+        dataOut.proX3List = exports.game.proX3List;
+        send(exports.game.prm, dataOut);
+    }
 }
 function send(who, data) {
     if (Array.isArray(who)) {

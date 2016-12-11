@@ -23,6 +23,7 @@ export class Data {
     proIndex = 16; // 牌堆顶
     proList = new Array<any>();  // 法案牌堆
     proX3List: Array<number>; // 法案牌摸的三张牌
+    pro: number; // 选择弃掉的法案
 
     voteList: Array<Array<number>>; // 投票总记录
     nowVote: Array<number>; // 当前正在进行的投票
@@ -146,6 +147,12 @@ io.on("connection", socket => {
                         dataOut.voteCount = game.voteCount;
                         send(game.playerList, dataOut);
                     }
+                    break;
+                }
+            case "proSelect":
+                {
+
+                    proSelect(data.pro, data.proX3List);
 
 
                     break;
@@ -183,6 +190,38 @@ function findPro(list?: Array<number>) {
     send(tmp, dataOut);
     dataOut.proX3List = game.proX3List;
     send(game.pre, dataOut);
+}
+
+
+function proSelect(proDiscard, list) {
+    let dataOut = new Data();
+    if (game.proSelect(proDiscard, list)) {
+        console.log("法案生效");
+        dataOut.type = "proEff";
+        dataOut.pro = game.pro;
+        send(game.playerList, dataOut);
+        if (game.started) {
+            console.log("通知选总理");
+            let dataOut = new Data();
+            dataOut.playerList = game.playerList;
+            dataOut.pre = game.pre;
+            dataOut.prenext = game.prenext;
+            dataOut.type = "selectPrm";
+            dataOut.pre = game.pre;
+            send(game.playerList, dataOut);
+        } else {
+            console.log("游戏结束");
+        }
+    } else {
+        console.log("告知总理选法案");
+        let tmp = game.playerList.filter(t => {
+            return t.isPrm !== true;
+        });
+        send(tmp, dataOut);
+        dataOut.proX3List = game.proX3List;
+        send(game.prm, dataOut);
+    }
+
 }
 
 

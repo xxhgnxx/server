@@ -1,6 +1,7 @@
 "use strict";
 var Game = (function () {
     function Game() {
+        // skillList = new Array<Function | string>();  // 技能列表
         this.skillList = new Array(); // 技能列表
         this.proList = new Array(); // 法案牌堆
         this.proIndex = 16; // 牌堆顶
@@ -69,7 +70,7 @@ var Game = (function () {
             if (plyaerCount >= 7) {
                 this.fascistCount = 2;
                 console.log("选择7-8人游戏");
-                this.skillList[0] = "x";
+                this.skillList[0] = this.nothing;
                 this.skillList[1] = this.invPlayer;
                 this.skillList[2] = this.setPre;
                 this.skillList[3] = this.toKill;
@@ -79,8 +80,8 @@ var Game = (function () {
                 if (plyaerCount >= 5) {
                     this.fascistCount = 1;
                     console.log("选择5-6人游戏");
-                    this.skillList[0] = "x";
-                    this.skillList[1] = "x";
+                    this.skillList[0] = this.nothing;
+                    this.skillList[1] = this.nothing;
                     this.skillList[2] = this.toLookPro;
                     this.skillList[3] = this.toKill;
                     this.skillList[4] = this.toKill;
@@ -92,7 +93,6 @@ var Game = (function () {
         }
         this.liberalCount = plyaerCount - 1 - this.fascistCount;
     };
-    Game.prototype.setPro = function () { };
     // 提案牌洗牌
     Game.prototype.shuffle = function () {
         console.log("提案洗牌");
@@ -129,7 +129,6 @@ var Game = (function () {
         this.prm = this.playerList.filter(function (t) { return t.socketId === user.socketId; })[0];
         this.prm.isPrm = true;
     };
-    Game.prototype.effPro = function () { };
     // 发起投票
     Game.prototype.setVote = function () {
         var tmp = new Array();
@@ -158,6 +157,21 @@ var Game = (function () {
             return false;
         }
     };
+    //  法案选择
+    Game.prototype.proSelect = function (proDiscard, list) {
+        console.log("待选牌堆" + list.length + "张");
+        if (list.length === 3) {
+            list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
+            this.findPro(list);
+            return false;
+        }
+        else {
+            list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
+            console.log("待选牌堆" + list);
+            this.proEff(list[0]); // 法案生效
+            return true;
+        }
+    };
     // 选法案，list为空则为总统，list有内容则为总理
     Game.prototype.findPro = function (list) {
         if (!list) {
@@ -183,9 +197,59 @@ var Game = (function () {
             console.log("总理选提案");
         }
     };
+    Game.prototype.proEff = function (pro, force) {
+        this.failTimes = 0;
+        console.log(pro);
+        if (pro >= 6) {
+            console.log("红色提案生效");
+            this.proEffRed = this.proEffRed + 1;
+        }
+        else {
+            console.log("蓝色提案生效");
+            this.proEffBlue = this.proEffBlue + 1;
+        }
+        if (this.proEffRed === 6) {
+            this.started = false;
+            console.log("红方胜利");
+        }
+        else {
+            if (this.proEffBlue === 5) {
+                this.started = false;
+                console.log("蓝方胜利");
+            }
+            else {
+                this.proList.splice(this.proList.indexOf(pro), 1); // 从总牌堆删除生效法案
+                for (var n in this.playerList) {
+                    this.playerList[n].isLastPre = false;
+                    this.playerList[n].isLastPrm = false;
+                    this.playerList[n].isPre = false;
+                    this.playerList[n].isPrm = false;
+                } // 上届政府标记归零
+                if (!force) {
+                    this.pre.isLastPre = true;
+                    this.prm.isLastPrm = true;
+                    this.prm = null;
+                }
+                else {
+                    // 强制生效时，牌堆顶摸走一张
+                    this.proIndex = this.proIndex - 1;
+                }
+                // 红色法案生效，执行技能
+                if (pro >= 6) {
+                    // console.log("执行技能");
+                    this.skillList[this.proEffRed - 1]();
+                }
+                else {
+                    this.selectPre(this.prenext);
+                }
+            }
+        }
+        this.pro = pro;
+    };
+    // 无技能
+    Game.prototype.nothing = function () { };
     Game.prototype.preSelect = function () { };
     Game.prototype.prmSelect = function () { };
-    Game.prototype.proSelect = function () { };
     Game.prototype.tmp = function () { };
     Game.prototype.back = function () { };
     // 游戏状态，是否开始，影响到能否加入游戏等
@@ -242,12 +306,6 @@ var Game = (function () {
         // } else {
         //     selectPre(prenext);
         // }
-    };
-    // 游戏结束，获胜方wingroup，获胜原因reason
-    Game.prototype.gameOver = function (wingroup, reason) {
-        // sthToDo(gamePlayer, "msgSystem", "游戏结束", "msgPop");
-        // let msg = reason + wingroup;
-        // sthToDo(user, "msgSystem", msg, "gameMsg");
     };
     return Game;
 }());

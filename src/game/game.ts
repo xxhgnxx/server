@@ -5,16 +5,18 @@ import { getdate } from "../user/user.service";
 
 
 export class Game {
-    skillList = new Array<Function | string>();  // 技能列表
+    // skillList = new Array<Function | string>();  // 技能列表
+    skillList = new Array<Function>();  // 技能列表
     proList = new Array<any>();  // 法案牌堆
     proIndex = 16; // 牌堆顶
     proX3List: Array<number>; // 法案牌摸的三张牌
     started: boolean = false;       // 游戏是否开始
     playerList = new Array<User>(); // 加入本次游戏的玩家列表，主要用于消息发送
+    pro: number; // 生效法案
 
-    proEffBlue = 0; // 法案生效数
-    proEffRed = 0; // 法案生效数
-    failTimes = 0; // 政府组件失败次数
+    proEffBlue: number = 0; // 法案生效数
+    proEffRed: number = 0; // 法案生效数
+    failTimes: number = 0; // 政府组件失败次数
     fascistCount: number; // 法西斯玩家数量
     liberalCount: number; // 自由党玩家数量
     voteList = new Array<Array<number>>(); // 投票总记录
@@ -88,7 +90,7 @@ export class Game {
             if (plyaerCount >= 7) {
                 this.fascistCount = 2;
                 console.log("选择7-8人游戏");
-                this.skillList[0] = "x";
+                this.skillList[0] = this.nothing;
                 this.skillList[1] = this.invPlayer;
                 this.skillList[2] = this.setPre;
                 this.skillList[3] = this.toKill;
@@ -97,8 +99,8 @@ export class Game {
                 if (plyaerCount >= 5) {
                     this.fascistCount = 1;
                     console.log("选择5-6人游戏");
-                    this.skillList[0] = "x";
-                    this.skillList[1] = "x";
+                    this.skillList[0] = this.nothing;
+                    this.skillList[1] = this.nothing;
                     this.skillList[2] = this.toLookPro;
                     this.skillList[3] = this.toKill;
                     this.skillList[4] = this.toKill;
@@ -109,7 +111,7 @@ export class Game {
         }
         this.liberalCount = plyaerCount - 1 - this.fascistCount;
     }
-    setPro() { }
+
 
 
     // 提案牌洗牌
@@ -150,7 +152,8 @@ export class Game {
         this.prm = this.playerList.filter(t => { return t.socketId === user.socketId; })[0];
         this.prm.isPrm = true;
     }
-    effPro() { }
+
+
 
     // 发起投票
     setVote() {
@@ -182,6 +185,38 @@ export class Game {
 
     }
 
+    //  法案选择
+    proSelect(proDiscard: number, list: Array<number>): boolean {
+        console.log("待选牌堆" + list.length + "张");
+        if (list.length === 3) {
+            list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
+            this.findPro(list);
+            return false;
+        } else {
+            list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
+            console.log("待选牌堆" + list);
+            this.proEff(list[0]); // 法案生效
+            return true;
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     // 选法案，list为空则为总统，list有内容则为总理
     findPro(list: Array<number>) {
         if (!list) {
@@ -208,11 +243,58 @@ export class Game {
 
 
 
+    proEff(pro: number, force?: boolean) {
+        this.failTimes = 0;
+        console.log(pro);
+        if (pro >= 6) {
+            console.log("红色提案生效");
+            this.proEffRed = this.proEffRed + 1;
+        } else {
+            console.log("蓝色提案生效");
+            this.proEffBlue = this.proEffBlue + 1;
+        }
+        if (this.proEffRed === 6) {
+            this.started = false;
+            console.log("红方胜利");
+        } else {
+            if (this.proEffBlue === 5) {
+                this.started = false;
+                console.log("蓝方胜利");
+            } else {
+                this.proList.splice(this.proList.indexOf(pro), 1); // 从总牌堆删除生效法案
+                for (let n in this.playerList) {
+                    this.playerList[n].isLastPre = false;
+                    this.playerList[n].isLastPrm = false;
+                    this.playerList[n].isPre = false;
+                    this.playerList[n].isPrm = false;
+                } // 上届政府标记归零
+                if (!force) {
+                    this.pre.isLastPre = true;
+                    this.prm.isLastPrm = true;
+                    this.prm = null;
+                } else {
+                    // 强制生效时，牌堆顶摸走一张
+                    this.proIndex = this.proIndex - 1;
+                }
+                // 红色法案生效，执行技能
+                if (pro >= 6) {
+                    // console.log("执行技能");
+                    this.skillList[this.proEffRed - 1]();
+                } else {
+                    this.selectPre(this.prenext);
+                }
+            }
+        }
+        this.pro = pro;
+    }
 
+
+    // 无技能
+    nothing() { }
 
     preSelect() { }
     prmSelect() { }
-    proSelect() { }
+
     tmp() { }
     back() { }
 
@@ -273,12 +355,7 @@ export class Game {
         //     selectPre(prenext);
         // }
     }
-    // 游戏结束，获胜方wingroup，获胜原因reason
-    gameOver(wingroup, reason) {
-        // sthToDo(gamePlayer, "msgSystem", "游戏结束", "msgPop");
-        // let msg = reason + wingroup;
-        // sthToDo(user, "msgSystem", msg, "gameMsg");
-    }
+
 
 
     constructor() {
