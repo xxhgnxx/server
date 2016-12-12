@@ -1,6 +1,6 @@
 "use strict";
 var user_1 = require("./user");
-var server_1 = require("../server");
+var server_1 = require("./server");
 var UserService = (function () {
     function UserService() {
         this.userList = new Array();
@@ -44,12 +44,10 @@ var UserService = (function () {
     UserService.prototype.userSeat = function (socketId) {
         if (this.socketIdToUser[socketId].isSeat) {
             this.socketIdToUser[socketId].isSeat = false;
-            server_1.game.playerList.splice(server_1.game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
             return "站起来" + this.socketIdToUser[socketId].name;
         }
         else {
             this.socketIdToUser[socketId].isSeat = true;
-            server_1.game.playerList.push(this.socketIdToUser[socketId]);
             return "坐下了" + this.socketIdToUser[socketId].name;
         }
     };

@@ -1,33 +1,25 @@
-let io = require("socket.io").listen(81);
-import { UserService } from "./userService";
-import { Game } from "./game";
-import { User } from "./user";
-import { VoteSys } from "./vote";
-import { Data } from "./data";
-
-export let userService = new UserService();
-export let game: Game = new Game();
-export let votesys: VoteSys = new VoteSys();
-
-
-let socketIdtoSocket = new Map();
-
-
-
-io.on("connection", socket => {
+"use strict";
+var io = require("socket.io").listen(81);
+var userService_1 = require("./userService");
+var game_1 = require("./game");
+var vote_1 = require("./vote");
+var data_1 = require("./data");
+exports.userService = new userService_1.UserService();
+exports.game = new game_1.Game();
+exports.votesys = new vote_1.VoteSys();
+var socketIdtoSocket = new Map();
+io.on("connection", function (socket) {
     console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
-
-    socket.on("disconnect", () => {
+    socket.on("disconnect", function () {
         console.log(Date().toString().slice(15, 25), socket.id, "离线");
         socketIdtoSocket.delete(socket.id);
-        let dataOut = new Data();
+        var dataOut = new data_1.Data();
         dataOut.type = "logout";
-        dataOut.msg = userService.logout(socket.id);
-        dataOut.playerList = userService.userList;
+        dataOut.msg = exports.userService.logout(socket.id);
+        dataOut.playerList = exports.userService.userList;
         io.emit("system", dataOut);
     });
-
-    socket.on("system", data => {
+    socket.on("system", function (data) {
         console.log("收到客户端发来的system请求", data.type, socket.id);
         io.emit(data.key);
         switch (data.type) {
@@ -35,34 +27,29 @@ io.on("connection", socket => {
                 {
                     console.log(Date().toString().slice(15, 25), "login", data.name);
                     socketIdtoSocket[socket.id] = socket;
-                    let dataOut = new Data();
+                    var dataOut = new data_1.Data();
                     dataOut.type = "loginSuccess";
-                    dataOut.msg = userService.login(socket, data.name);
-                    dataOut.user = userService.socketIdToUser[socket.id];
+                    dataOut.msg = exports.userService.login(socket, data.name);
+                    dataOut.user = exports.userService.socketIdToUser[socket.id];
                     dataOut.socketId = socket.id;
-                    dataOut.userList = userService.userList;
-                    dataOut.toWho = userService.userList;
+                    dataOut.userList = exports.userService.userList;
+                    dataOut.toWho = exports.userService.userList;
                     send(dataOut);
                     break;
                 }
             case "userSeat":
                 {
                     console.log(Date().toString().slice(15, 25), "尝试坐下", data.name);
-                    // let dataOut = new Data();
-                    // dataOut.msg = userService.userSeat(socket.id);
-                    // dataOut.type = "userSeat";
-                    // dataOut.user = userService.socketIdToUser[socket.id];
-                    // io.emit("system", dataOut);
-                    // break;
                 }
             case "gamestart":
                 {
                     ////////////////////// 未完成功能
                     console.log(Date().toString().slice(15, 25), "游戏开始");
-                    if (data = game.start(socket.id)) {
+                    if (data = exports.game.start(socket.id)) {
                         // io.emit("system", data);
                         send(data);
-                    } else {
+                    }
+                    else {
                         console.log("人数不足");
                     }
                     break;
@@ -70,36 +57,26 @@ io.on("connection", socket => {
             case "prmSelect":
                 {
                     console.log(Date().toString().slice(15, 25), "选择了总理", data.user.name);
-                    send(game.setPrm(data.user));
+                    send(exports.game.setPrm(data.user));
                     break;
                 }
             case "vote":
                 {
-                    console.log(Date().toString().slice(15, 25), userService.socketIdToUser[socket.id].name, "投票了");
-                    send(game.getVote(socket.id, data.voteRes));
+                    console.log(Date().toString().slice(15, 25), exports.userService.socketIdToUser[socket.id].name, "投票了");
+                    send(exports.game.getVote(socket.id, data.voteRes));
                     break;
                 }
             case "proSelect":
                 {
-
                     proSelect(data.pro, data.proX3List);
-
-
                     break;
                 }
-
             default:
                 console.log(Date().toString().slice(15, 25), "神秘的未定义请求");
         }
     });
-
 });
-
-
-
-
-
-function findPro(list?: Array<number>) {
+function findPro(list) {
     // game.findPro(list);
     // let dataOut = new Data();
     // dataOut.type = "choosePro";
@@ -112,10 +89,8 @@ function findPro(list?: Array<number>) {
     // dataOut.proX3List = game.proX3List;
     // send(game.pre, dataOut);
 }
-
-
 function proSelect(proDiscard, list) {
-send(game.proSelect(proDiscard, list));
+    send(exports.game.proSelect(proDiscard, list));
     // let dataOut = new Data();
     // if (game.proSelect(proDiscard, list)) {
     //     console.log("法案生效");
@@ -143,39 +118,31 @@ send(game.proSelect(proDiscard, list));
     //     dataOut.proX3List = game.proX3List;
     //     send(game.prm, dataOut);
     // }
-
 }
-
-
-
-function send(data: Data | Array<Data>) {
-
-
+function send(data) {
     if (Array.isArray(data)) {
-        for (let v_data of data) {
-
+        for (var _i = 0, data_2 = data; _i < data_2.length; _i++) {
+            var v_data = data_2[_i];
             if (Array.isArray(v_data.toWho)) {
-                for (let v_toWho of v_data.toWho) {
+                for (var _a = 0, _b = v_data.toWho; _a < _b.length; _a++) {
+                    var v_toWho = _b[_a];
                     socketIdtoSocket[v_toWho.socketId].emit("system", v_data);
                 }
-            } else {
+            }
+            else {
                 socketIdtoSocket[v_data.toWho.socketId].emit("system", v_data);
             }
-
-
         }
-
-
-    } else {
-
+    }
+    else {
         if (Array.isArray(data.toWho)) {
-            for (let v_toWho of data.toWho) {
+            for (var _c = 0, _d = data.toWho; _c < _d.length; _c++) {
+                var v_toWho = _d[_c];
                 socketIdtoSocket[v_toWho.socketId].emit("system", data);
             }
-        } else {
+        }
+        else {
             socketIdtoSocket[data.toWho.socketId].emit("system", data);
         }
-
     }
-
 }

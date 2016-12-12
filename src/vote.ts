@@ -1,4 +1,4 @@
-import { User } from "../user/user";
+import { User } from "./user";
 export class VoteSys {
     voteList = new Array<Array<number>>();
     votes = new Array<number>();

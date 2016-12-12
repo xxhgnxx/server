@@ -5,13 +5,10 @@ export class User {
     isSeat: boolean = false;
     seatNo: number = 0;
     name: string;
-    password: string;
     isLastPre: boolean = false;
     isLastPrm: boolean = false;
     isPre: boolean = false;
     isPrm: boolean = false;
-    isHitler: boolean = false;
-    isFascist: boolean = false;
     role: string = "x";
     constructor(name: string) {
         this.name = name;

@@ -1,6 +1,5 @@
-
 import { User }  from "./user";
-import { game } from "../server";
+import { game } from "./server";
 
 
 
@@ -49,11 +48,11 @@ export class UserService {
     userSeat(socketId): string {
         if (this.socketIdToUser[socketId].isSeat) {
             this.socketIdToUser[socketId].isSeat = false;
-            game.playerList.splice(game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+
             return "站起来" + this.socketIdToUser[socketId].name;
         } else {
             this.socketIdToUser[socketId].isSeat = true;
-            game.playerList.push(this.socketIdToUser[socketId]);
+
             return "坐下了" + this.socketIdToUser[socketId].name;
         }
     }

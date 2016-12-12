@@ -1,8 +1,7 @@
-import { userService } from "../server";
-import { User } from "../user";
-import { Data } from "../server";
-import { getdate } from "../user/user.service";
-
+import { userService } from "./server";
+import { User } from "./user";
+import { Data } from "./data";
+// import { getdate } from "./userService";
 
 export class Game {
     // skillList = new Array<Function | string>();  // 技能列表
@@ -19,50 +18,94 @@ export class Game {
     failTimes: number = 0; // 政府组件失败次数
     fascistCount: number; // 法西斯玩家数量
     liberalCount: number; // 自由党玩家数量
+
+    isVoted = false;
     voteList = new Array<Array<number>>(); // 投票总记录
     nowVote: Array<number>; // 当前正在进行的投票
     voteRes: number = 0; // 投票结果
     voteCount: number;  //  投票数量
+
     lastPre: User;
     lastPrm: User;
     pre: User;
     prenext: User;
     prm: User;
+
     hitler: User;
-    fascist: Array<User>;
-    liberal: Array<User>;
-    start() {
+    fascist = new Array<User>();
+    liberal = new Array<User>();
+
+
+    start(socketId): Array<Data> | boolean {
+        this.playerList = userService.userList.filter(t => {
+            return t.isSeat === true;
+        });
         if (this.playerList.length < 5) {
             console.log("人数不足：", this.playerList.length);
+            return false;
         } else {
             console.log("游戏开始", this.playerList.length);
+            this.started = true;
             this.selectGame();
-            this.setPlayer();
             this.makePro();
             this.shuffle();
-            this.started = true;
-
+            let dataList = this.setPlayer();
+            let dataOut = new Data();
+            dataOut.userList = userService.userList;
+            dataOut.fascistCount = this.fascistCount;
+            dataOut.proIndex = this.proIndex;
+            dataOut.proList = this.proList;
+            dataOut.started = this.started;
+            dataOut.user = userService.socketIdToUser[socketId];
+            dataOut.type = "gamestart";
+            dataOut.toWho = this.playerList;
+            dataList.unshift(dataOut);
+            dataList.push(this.selectPre(this.playerList[Math.floor(Math.random() * this.playerList.length)]));
+            return dataList;
         }
     }
-    setPlayer() {
+    setPlayer(): Array<Data> {
         console.log("分发玩家身份牌,打乱玩家座位，生成新的顺序");
-        for (let i = 0; i < this.playerList.length; i++) {
-            this.playerList[i].role = "liberal";
-        }
+        let tmp;
+        let dataList = new Array<Data>();
         this.playerList.filter(t => { t.seatNo = Math.random(); });
         this.playerList.sort((a, b) => { return a.seatNo - b.seatNo; });
-        this.playerList[0].role = "Hitler";
-        this.playerList[0].isHitler = true;
+        this.hitler = this.playerList[0];
+        let hitData = new Data();
+        hitData.toWho = this.hitler;
+        hitData.type = "role";
+        hitData.role = "Hitler";
+        if (this.playerList.length < 6) {
+            hitData.other = this.fascist;
+        }
+        dataList.push(hitData);
         for (let i = 1; i <= this.fascistCount; i++) {
+            tmp = new Data();
+            tmp.type = "role";
+            tmp.role = "Fascist";
+            tmp.toWho = this.playerList[i];
+            tmp.other = this.fascist;
+            tmp.target = this.hitler;
+            dataList.push(tmp);
+            this.fascist.push(this.playerList[i]);
             this.playerList[i].role = "Fascist";
-            this.playerList[i].isFascist = true;
+        }
+        console.log();
+        for (let i = this.fascistCount + 1; i < this.playerList.length; i++) {
+            tmp = new Data();
+            tmp.type = "role";
+            tmp.role = "Liberal";
+            tmp.toWho = this.playerList[i];
+            dataList.push(tmp);
+            this.liberal.push(this.playerList[i]);
+            this.playerList[i].role = "Liberal";
         }
         this.playerList.filter(t => { t.seatNo = Math.random(); });
         this.playerList.sort((a, b) => { return a.seatNo - b.seatNo; });
         for (let i = 0; i < this.playerList.length; i++) {
             this.playerList[i].seatNo = i + 1;
         }
-
+        return dataList;
     }
 
     makePro() {
@@ -130,7 +173,7 @@ export class Game {
     }
 
     // 选总统，一轮结束后继续游戏的象征
-    selectPre(player: User) {
+    selectPre(player: User): Data {
         // if (pre) {pre.canbeselect="true";};
         this.playerList.filter(t => { t.isPre = false; });
         this.pre = player;
@@ -143,14 +186,31 @@ export class Game {
         console.log("本届总统是", this.pre.name);
         console.log("下届总统是", this.prenext.name);
         // 投票数归零
-
-
+        let data = new Data();
+        data.playerList = this.playerList;
+        data.pre = this.pre;
+        data.prenext = this.prenext;
+        data.type = "selectPrm";
+        data.pre = this.pre;
+        data.toWho = this.playerList;
+        return data;
     }
 
     // 设定总理
-    setPrm(user: User) {
+    setPrm(user: User): Data {
         this.prm = this.playerList.filter(t => { return t.socketId === user.socketId; })[0];
         this.prm.isPrm = true;
+        console.log(Date().toString().slice(15, 25), "创建新投票");
+        this.setVote();
+        let data = new Data();
+        data.toWho = this.playerList;
+        data.type = "pleaseVote";
+        data.playerList = this.playerList;
+        data.prm = this.prm;
+        data.pre = this.pre;
+        data.voteCount = this.voteCount;
+        data.nowVote = this.nowVote;
+        return data;
     }
 
 
@@ -158,45 +218,64 @@ export class Game {
     // 发起投票
     setVote() {
         let tmp = new Array<number>();
+        this.voteCount = 0;
         for (let i = 0; i < this.playerList.length; i++) {
             if (this.playerList[i].isSurvival) {
                 tmp[this.playerList[i].seatNo - 1] = 0;
+            } else {
+                tmp[this.playerList[i].seatNo - 1] = 4;
+                this.voteCount = this.voteCount + 1;
             }
         }
         this.voteList.push(tmp);
         this.nowVote = tmp;
-        this.voteCount = 0;
+        this.isVoted = false;
         this.voteRes = 0;
     }
 
     // 结算投票
-    getVote(seatNo: number, res: number): boolean {
-        this.nowVote[seatNo] = res;
+    getVote(sockeId: string, res: number): Array<Data> {
+        let tmp = new Array<Data>();
+        let data = new Data();
+        tmp.push(data);
+        this.nowVote[userService.socketIdToUser[sockeId].seatNo - 1] = res;
         this.voteCount = this.voteCount + 1;
+
         if (this.voteCount === this.nowVote.length) {
-            for (let i = 0; i < this.nowVote.length; i++) {
-                this.voteRes = this.voteRes + this.nowVote[i];
+            // 投票完成
+            if (this.nowVote.filter(t => {
+                return t === 2;
+            }).length * 2 > this.nowVote.length - this.nowVote.filter(t => {
+                return t === 4;
+            }).length) {
+                // 成功
+                data.voteRes = 1;
+                tmp = tmp.concat(this.findPro());
+            } else {
+                // 失败
+                data.voteRes = 0;
+                tmp.push(this.selectPre(this.prenext));
             }
-            return true;
         } else {
             console.log("投票记录", this.voteCount + "/" + this.nowVote.length);
-            return false;
         }
-
+        data.type = "pleaseVote";
+        data.nowVote = this.nowVote;
+        data.toWho = this.playerList;
+        // data.isVoted = this.isVoted;
+        return tmp;
     }
 
     //  法案选择
-    proSelect(proDiscard: number, list: Array<number>): boolean {
+    proSelect(proDiscard: number, list: Array<number>): Array<Data> {
         console.log("待选牌堆" + list.length + "张");
         if (list.length === 3) {
             list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
-            this.findPro(list);
-            return false;
+            return this.findPro(list);
         } else {
             list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
             console.log("待选牌堆" + list);
-            this.proEff(list[0]); // 法案生效
-            return true;
+            return this.proEff(list[0]); // 法案生效
         }
     }
 
@@ -218,7 +297,9 @@ export class Game {
 
 
     // 选法案，list为空则为总统，list有内容则为总理
-    findPro(list: Array<number>) {
+    findPro(list?: Array<number>): Array<Data> {
+        let tmp = new Array<Data>();
+
         if (!list) {
             console.log("总统选提案");
             let proTmp = [];
@@ -235,15 +316,43 @@ export class Game {
             this.proX3List = proTmp;
             console.log("摸牌之后牌堆顶位置编号" + this.proIndex);
             console.log("待选法案堆" + proTmp);
+            let data = new Data;
+            data.type = "choosePro";
+            data.toWho = this.playerList.filter(t => {
+                return t.isPre !== true;
+            });
+            data.proList = this.proList;
+            data.proIndex = this.proIndex;
+            tmp.push(data);
+            let data2 = new Data();
+            data2.proX3List = this.proX3List;
+            data2.type = "choosePro";
+            data2.toWho = this.pre;
+            tmp.push(data2);
         } else {
             this.proX3List = list;
             console.log("总理选提案");
+            let data = new Data;
+            data.type = "choosePro";
+            data.toWho = this.playerList.filter(t => {
+                return t.isPrm !== true;
+            });
+            data.proList = this.proList;
+            data.proIndex = this.proIndex;
+            tmp.push(data);
+            let data2 = new Data();
+            data2.proX3List = this.proX3List;
+            data2.type = "choosePro";
+            data2.toWho = this.prm;
+            tmp.push(data2);
         }
+        return tmp;
     }
 
 
 
-    proEff(pro: number, force?: boolean) {
+    proEff(pro: number, force?: boolean): Array<Data> {
+        let tmp = new Array<Data>();
         this.failTimes = 0;
         console.log(pro);
         if (pro >= 6) {
@@ -269,6 +378,7 @@ export class Game {
                     this.playerList[n].isPrm = false;
                 } // 上届政府标记归零
                 if (!force) {
+                    // 普通生效，变更政府标记
                     this.pre.isLastPre = true;
                     this.prm.isLastPrm = true;
                     this.prm = null;
@@ -276,16 +386,31 @@ export class Game {
                     // 强制生效时，牌堆顶摸走一张
                     this.proIndex = this.proIndex - 1;
                 }
+
                 // 红色法案生效，执行技能
                 if (pro >= 6) {
-                    // console.log("执行技能");
+                    console.log("执行技能");
+
                     this.skillList[this.proEffRed - 1]();
+                    tmp.push(this.selectPre(this.prenext));
+
                 } else {
-                    this.selectPre(this.prenext);
+                    tmp.push(this.selectPre(this.prenext));
                 }
             }
         }
         this.pro = pro;
+
+        let data = new Data();
+        data.type = "proEff";
+        data.pro = this.pro;
+        data.proIndex = this.proIndex;
+        data.proList = this.proList;
+        data.proEffRed = this.proEffRed;
+        data.proEffBlue = this.proEffBlue;
+        data.toWho = this.playerList;
+        tmp.unshift(data);
+        return tmp;
     }
 
 
