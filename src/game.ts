@@ -30,6 +30,8 @@ export class Game {
     pre: User;
     prenext: User;
     prm: User;
+    prmTmp: User;  // 待投票的总理
+
 
     hitler: User;
     fascist = new Array<User>();
@@ -71,6 +73,7 @@ export class Game {
         this.playerList.filter(t => { t.seatNo = Math.random(); });
         this.playerList.sort((a, b) => { return a.seatNo - b.seatNo; });
         this.hitler = this.playerList[0];
+        this.hitler.role = "Hitler";
         let hitData = new Data();
         hitData.toWho = this.hitler;
         hitData.type = "role";
@@ -124,29 +127,29 @@ export class Game {
         if (plyaerCount >= 9) {
             console.log("选择9-10人游戏");
             this.fascistCount = 3;
-            this.skillList[0] = this.invPlayer;
-            this.skillList[1] = this.invPlayer;
-            this.skillList[2] = this.setPre;
-            this.skillList[3] = this.toKill;
-            this.skillList[4] = this.toKill;
+            this.skillList[0] = this.invPlayer.bind(this);
+            this.skillList[1] = this.invPlayer.bind(this);
+            this.skillList[2] = this.preSelect.bind(this);
+            this.skillList[3] = this.toKill.bind(this);
+            this.skillList[4] = this.toKill.bind(this);
         } else {
             if (plyaerCount >= 7) {
                 this.fascistCount = 2;
                 console.log("选择7-8人游戏");
-                this.skillList[0] = this.nothing;
-                this.skillList[1] = this.invPlayer;
-                this.skillList[2] = this.setPre;
-                this.skillList[3] = this.toKill;
-                this.skillList[4] = this.toKill;
+                this.skillList[0] = this.nothing.bind(this);
+                this.skillList[1] = this.invPlayer.bind(this);
+                this.skillList[2] = this.preSelect.bind(this);
+                this.skillList[3] = this.toKill.bind(this);
+                this.skillList[4] = this.toKill.bind(this);
             } else {
                 if (plyaerCount >= 5) {
                     this.fascistCount = 1;
                     console.log("选择5-6人游戏");
-                    this.skillList[0] = this.nothing;
-                    this.skillList[1] = this.nothing;
-                    this.skillList[2] = this.toLookPro;
-                    this.skillList[3] = this.toKill;
-                    this.skillList[4] = this.toKill;
+                    this.skillList[0] = this.nothing.bind(this);
+                    this.skillList[1] = this.nothing.bind(this);
+                    this.skillList[2] = this.toLookPro.bind(this);
+                    this.skillList[3] = this.toKill.bind(this);
+                    this.skillList[4] = this.toKill.bind(this);
                 } else {
                     console.log("人数不足");
                 }
@@ -173,16 +176,23 @@ export class Game {
     }
 
     // 选总统，一轮结束后继续游戏的象征
-    selectPre(player: User): Data {
+    selectPre(player: User, next?: boolean): Data {
         // if (pre) {pre.canbeselect="true";};
         this.playerList.filter(t => { t.isPre = false; });
-        this.pre = player;
+        this.pre = userService.socketIdToUser[player.socketId];
         this.pre.isPre = true;
-        if (this.playerList[this.playerList.indexOf(player) + 1]) {
-            this.prenext = this.playerList[this.playerList.indexOf(player) + 1];
+
+        if (!next) {
+            // 顺序指定下届总统
+            if (this.playerList[this.playerList.indexOf(player) + 1]) {
+                this.prenext = this.playerList[this.playerList.indexOf(player) + 1];
+            } else {
+                this.prenext = this.playerList[0];
+            };
         } else {
-            this.prenext = this.playerList[0];
-        };
+            // 下届总理不变
+
+        }
         console.log("本届总统是", this.pre.name);
         console.log("下届总统是", this.prenext.name);
         // 投票数归零
@@ -198,15 +208,15 @@ export class Game {
 
     // 设定总理
     setPrm(user: User): Data {
-        this.prm = this.playerList.filter(t => { return t.socketId === user.socketId; })[0];
-        this.prm.isPrm = true;
+        // 待投票总理
+        this.prmTmp = userService.socketIdToUser[user.socketId];
         console.log(Date().toString().slice(15, 25), "创建新投票");
         this.setVote();
         let data = new Data();
         data.toWho = this.playerList;
         data.type = "pleaseVote";
         data.playerList = this.playerList;
-        data.prm = this.prm;
+        data.prmTmp = this.prmTmp;
         data.pre = this.pre;
         data.voteCount = this.voteCount;
         data.nowVote = this.nowVote;
@@ -240,7 +250,6 @@ export class Game {
         tmp.push(data);
         this.nowVote[userService.socketIdToUser[sockeId].seatNo - 1] = res;
         this.voteCount = this.voteCount + 1;
-
         if (this.voteCount === this.nowVote.length) {
             // 投票完成
             if (this.nowVote.filter(t => {
@@ -249,12 +258,27 @@ export class Game {
                 return t === 4;
             }).length) {
                 // 成功
-                data.voteRes = 1;
-                tmp = tmp.concat(this.findPro());
+                if (this.proEffRed >= 3 && this.prmTmp.role === "Hitler") {
+                    //  总理生效 判断希特勒上位
+                    console.log("游戏结束");
+                    return this.gameover("游戏结束，红色胜利");
+                    // todo
+                } else {
+                    this.prm = this.prmTmp;
+                    data.prm = this.prm;
+                    data.voteRes = 1;
+                    tmp = tmp.concat(this.findPro());
+                }
             } else {
                 // 失败
                 data.voteRes = 0;
-                tmp.push(this.selectPre(this.prenext));
+                this.failTimes = this.failTimes + 1;
+                if (this.failTimes === 3) {
+                    // 强制生效
+                    tmp = tmp.concat(this.proEff(this.proList[this.proIndex], true));
+                } else {
+                    tmp.push(this.selectPre(this.prenext));
+                }
             }
         } else {
             console.log("投票记录", this.voteCount + "/" + this.nowVote.length);
@@ -278,19 +302,6 @@ export class Game {
             return this.proEff(list[0]); // 法案生效
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -321,7 +332,6 @@ export class Game {
             data.toWho = this.playerList.filter(t => {
                 return t.isPre !== true;
             });
-            data.proList = this.proList;
             data.proIndex = this.proIndex;
             tmp.push(data);
             let data2 = new Data();
@@ -365,10 +375,16 @@ export class Game {
         if (this.proEffRed === 6) {
             this.started = false;
             console.log("红方胜利");
+            //   todo:结算
+            console.log("游戏结束");
+            return this.gameover("游戏结束，红色胜利");
         } else {
             if (this.proEffBlue === 5) {
                 this.started = false;
                 console.log("蓝方胜利");
+                //   todo:结算
+                console.log("游戏结束");
+                return this.gameover("游戏结束，蓝色胜利");
             } else {
                 this.proList.splice(this.proList.indexOf(pro), 1); // 从总牌堆删除生效法案
                 for (let n in this.playerList) {
@@ -386,21 +402,22 @@ export class Game {
                     // 强制生效时，牌堆顶摸走一张
                     this.proIndex = this.proIndex - 1;
                 }
-
-                // 红色法案生效，执行技能
                 if (pro >= 6) {
+                    // 红色法案生效，执行技能
+                    // test
                     console.log("执行技能");
+                    tmp = tmp.concat(this.skillList[this.proEffRed - 1]());
+                    // tmp = tmp.concat(this.skillList[4]());
 
-                    this.skillList[this.proEffRed - 1]();
-                    tmp.push(this.selectPre(this.prenext));
+                    // tmp = tmp.concat(this.nothing());
 
                 } else {
+                    // 蓝色法案生效，执行技能
                     tmp.push(this.selectPre(this.prenext));
                 }
             }
         }
         this.pro = pro;
-
         let data = new Data();
         data.type = "proEff";
         data.pro = this.pro;
@@ -415,75 +432,132 @@ export class Game {
 
 
     // 无技能
-    nothing() { }
+    nothing(): Array<Data> {
+        console.log("无技能");
+        let tmp = new Array<Data>();
+        tmp.push(this.selectPre(this.prenext)); // 切换总统 继续游戏
+        return tmp;
+    }
 
-    preSelect() { }
-    prmSelect() { }
+
 
     tmp() { }
     back() { }
 
-    // 游戏状态，是否开始，影响到能否加入游戏等
+
 
 
     // 技能：调查身份
-    invPlayer() {
-        // console.log("总统 调查身份");
-        // let list = gamePlayer.filter(t => {
-        //     return t.name !== pre.name;
-        // });
-        // sthToDo(user, "msgSystem", "等待总统进行身份调查", "gameMsg");
-        // socketlist[pre.name].emit("invPlayer", list);
+    invPlayer(player?: User): Array<Data> {
+        console.log("调查身份");
+        let tmp = new Array<Data>();
+        if (typeof player === "undefined") {
+            console.log("通知总统 调查身份");
+            let data = new Data();
+            data.type = "invPlayer";
+            data.toWho = this.playerList;
+            tmp.push(data);
+        } else {
+            console.log("告知调查结果");
+            let data2 = new Data();
+            data2.type = "invPlayer";
+            if (this.liberal.filter(t => {
+                return t.socketId === player.socketId;
+            })[0]) {
+                data2.other = "./pic/结果蓝.png";
+            } else {
+                data2.other = "./pic/结果红.png";
+            }
+            data2.target = player;
+            data2.toWho = this.pre;
+            console.log(data2.toWho);
+            tmp.push(data2);
+            tmp.push(this.selectPre(this.prenext));
+        }
+        return tmp;
     }
     // 技能：指定总统
-    setPre() {
-        // console.log("总统 指定总统");
-        // let list = gamePlayer.filter(t => {
-        //     return t.name !== pre.name;
-        // });
-        // sthToDo(user, "msgSystem", "等待总统指定下一任总统", "gameMsg");
-        // socketlist[pre.name].emit("nextPre", list);
+    preSelect(): Array<Data> {
+        console.log("指定总统");
+        let tmp = new Array<Data>();
+        let data = new Data();
+        data.type = "preSelect";
+        data.toWho = this.playerList;
+        tmp.push(data);
+        return tmp;
     }
     // 技能：枪决
-    toKill() {
-        // console.log("总统 枪决一人");
-        // let list = gamePlayer.filter(t => {
-        //     return t.name !== pre.name;
-        // });
-        // sthToDo(user, "msgSystem", "等待总统决定枪决目标", "gameMsg");
-        // socketlist[pre.name].emit("killPlayer", list);
-        // console.log("被枪决玩家需要取消操作权限..待添加");
+    toKill(player?: User): Array<Data> {
+        console.log("枪决");
+        let tmp = new Array<Data>();
+        // 杀人动作
+        if (typeof player === "undefined") {
+            let data = new Data();
+            data.type = "toKill";
+            data.toWho = this.playerList;
+            tmp.push(data);
+        } else {
+
+            let data = new Data();
+            data.type = "toKill";
+            data.target = player;
+            data.userList = userService.userList;
+            data.toWho = this.playerList;
+            tmp.push(data);
+            player = userService.socketIdToUser[player.socketId];
+            if (player.role === "Hitler") {
+                console.log("游戏结束");
+                return this.gameover("游戏结束，蓝色胜利");
+                // todo
+            } else {
+                // 枪毙的是下届总统时，切换下届总统
+                if (this.prenext === player) {
+                    console.log("被枪决的玩家是下届总统");
+                    if (this.playerList[this.playerList.indexOf(player) + 1]) {
+                        console.log("被枪决的玩家不是队列末位");
+                        this.prenext = this.playerList[this.playerList.indexOf(player) + 1];
+                    } else {
+                        console.log("被枪决的玩家是队列末位");
+                        this.prenext = this.playerList[0];
+                        console.log(this.prenext);
+                    };
+                }
+                // 从玩家状态修改
+                player.isSurvival = false;
+                tmp.push(this.selectPre(this.prenext)); // 切换总统 继续游戏
+            }
+        }
+        return tmp;
     }
     // 技能：查看法案
-    toLookPro() {
-        // console.log("总统 查看三张法案");
-        // sthToDo(user, "msgSystem", "总统查看了接下来的三张法案", "gameMsg");
-        // let msg = "法案牌堆顶依次是: ";
-        // for (i = 0; i <= 2; i++) {
-        //     if (proList[proIndex - i] >= 6) {
-        //         msg = msg + "红色法案 ";
-        //     } else {
-        //         msg = msg + "蓝色法案 ";
-        //     }
-        // }
-        // socketlist[pre.name].emit("invRes", msg);
-        // selectPre(prenext);
-    }
-    // 政府组建失败处理，调用proEff，t=1
-    failSystem() {
-        // failTimes = failTimes + 1;
-        // if (failTimes === 3) {
-        //     let msg = "连续三次组建政府失败，强行执行法案牌的第一张法案,";
-        //     sthToDo(user, "msgSystem", msg, "gameMsg");
-        //     proEff(proList[proIndex], 1);
-        // } else {
-        //     selectPre(prenext);
-        // }
+    toLookPro(): Array<Data> {
+        console.log("查看法案");
+        let tmp = new Array<Data>();
+        let data = new Data();
+        data.type = "toLookPro";
+        data.toWho = this.pre;
+        data.proX3List = new Array<number>();
+        for (let i = 0; i <= 2; i++) {
+            data.proX3List.push(this.proList[this.proIndex - i]);
+        }
+        tmp.push(data);
+        tmp.push(this.selectPre(this.prenext));
+        return tmp;
     }
 
+
+    // gameOver
+    gameover(res): Array<Data> {
+        let tmp = new Array<Data>();
+        let data = new Data();
+        data.type = "gameover";
+        data.toWho = this.playerList;
+        data.other = res;
+        tmp.push(data);
+        return tmp;
+    }
 
 
     constructor() {
-
     }
 }

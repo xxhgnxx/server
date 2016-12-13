@@ -43,10 +43,8 @@ io.on("connection", function (socket) {
                 }
             case "gamestart":
                 {
-                    ////////////////////// 未完成功能
                     console.log(Date().toString().slice(15, 25), "游戏开始");
                     if (data = exports.game.start(socket.id)) {
-                        // io.emit("system", data);
                         send(data);
                     }
                     else {
@@ -68,7 +66,22 @@ io.on("connection", function (socket) {
                 }
             case "proSelect":
                 {
-                    proSelect(data.pro, data.proX3List);
+                    send(exports.game.proSelect(data.pro, data.proX3List));
+                    break;
+                }
+            case "invPlayer":
+                {
+                    send(exports.game.invPlayer(data.target));
+                    break;
+                }
+            case "toKill":
+                {
+                    send(exports.game.toKill(data.target));
+                    break;
+                }
+            case "preSelect":
+                {
+                    send(exports.game.selectPre(data.user, true));
                     break;
                 }
             default:
@@ -76,49 +89,6 @@ io.on("connection", function (socket) {
         }
     });
 });
-function findPro(list) {
-    // game.findPro(list);
-    // let dataOut = new Data();
-    // dataOut.type = "choosePro";
-    // let tmp = game.playerList.filter(t => {
-    //     return t.isPre !== true;
-    // });
-    // dataOut.proList = game.proList;
-    // dataOut.proIndex = game.proIndex;
-    // send(tmp, dataOut);
-    // dataOut.proX3List = game.proX3List;
-    // send(game.pre, dataOut);
-}
-function proSelect(proDiscard, list) {
-    send(exports.game.proSelect(proDiscard, list));
-    // let dataOut = new Data();
-    // if (game.proSelect(proDiscard, list)) {
-    //     console.log("法案生效");
-    //     dataOut.type = "proEff";
-    //     dataOut.pro = game.pro;
-    //     send(game.playerList, dataOut);
-    //     if (game.started) {
-    //         console.log("通知选总理");
-    //         let dataOut = new Data();
-    //         dataOut.playerList = game.playerList;
-    //         dataOut.pre = game.pre;
-    //         dataOut.prenext = game.prenext;
-    //         dataOut.type = "selectPrm";
-    //         dataOut.pre = game.pre;
-    //         send(game.playerList, dataOut);
-    //     } else {
-    //         console.log("游戏结束");
-    //     }
-    // } else {
-    //     console.log("告知总理选法案");
-    //     let tmp = game.playerList.filter(t => {
-    //         return t.isPrm !== true;
-    //     });
-    //     send(tmp, dataOut);
-    //     dataOut.proX3List = game.proX3List;
-    //     send(game.prm, dataOut);
-    // }
-}
 function send(data) {
     if (Array.isArray(data)) {
         for (var _i = 0, data_2 = data; _i < data_2.length; _i++) {
