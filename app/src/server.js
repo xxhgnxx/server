@@ -2,11 +2,10 @@
 var io = require("socket.io").listen(81);
 var userService_1 = require("./userService");
 var game_1 = require("./game");
-var vote_1 = require("./vote");
 var data_1 = require("./data");
+var msgData_1 = require("./msgData");
 exports.userService = new userService_1.UserService();
 exports.game = new game_1.Game();
-exports.votesys = new vote_1.VoteSys();
 var socketIdtoSocket = new Map();
 io.on("connection", function (socket) {
     console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
@@ -40,6 +39,13 @@ io.on("connection", function (socket) {
             case "userSeat":
                 {
                     console.log(Date().toString().slice(15, 25), "尝试坐下", data.name);
+                    var dataOut_1 = new msgData_1.MsgData();
+                    dataOut_1.speakTime = 20;
+                    setTimeout(function () {
+                        console.log("发消息啦");
+                        io.emit("system", dataOut_1);
+                    }, 1000);
+                    break;
                 }
             case "gamestart":
                 {

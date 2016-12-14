@@ -4,10 +4,10 @@ import { Game } from "./game";
 import { User } from "./user";
 import { VoteSys } from "./vote";
 import { Data } from "./data";
-
+import { MsgData } from "./msgData";
 export let userService = new UserService();
 export let game: Game = new Game();
-export let votesys: VoteSys = new VoteSys();
+
 
 
 let socketIdtoSocket = new Map();
@@ -48,12 +48,14 @@ io.on("connection", socket => {
             case "userSeat":
                 {
                     console.log(Date().toString().slice(15, 25), "尝试坐下", data.name);
-                    // let dataOut = new Data();
-                    // dataOut.msg = userService.userSeat(socket.id);
-                    // dataOut.type = "userSeat";
-                    // dataOut.user = userService.socketIdToUser[socket.id];
-                    // io.emit("system", dataOut);
-                    // break;
+                    let dataOut = new MsgData();
+                    dataOut.speakTime = 20;
+                    setTimeout(() => {
+                        console.log("发消息啦");
+                        io.emit("system", dataOut);
+                    }, 1000);
+
+                    break;
                 }
             case "gamestart":
                 {
