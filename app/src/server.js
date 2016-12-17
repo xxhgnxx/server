@@ -6,6 +6,7 @@ var data_1 = require("./data");
 var msgData_1 = require("./msgData");
 exports.userService = new userService_1.UserService();
 exports.game = new game_1.Game();
+var myEmitter_1 = require("./myEmitter");
 var socketIdtoSocket = new Map();
 io.on("connection", function (socket) {
     console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
@@ -39,61 +40,131 @@ io.on("connection", function (socket) {
             case "userSeat":
                 {
                     console.log(Date().toString().slice(15, 25), "尝试坐下", data.name);
-                    var dataOut_1 = new msgData_1.MsgData();
-                    dataOut_1.speakTime = 20;
-                    setTimeout(function () {
-                        console.log("发消息啦");
-                        io.emit("system", dataOut_1);
-                    }, 1000);
+                    myEmitter_1.myEmitter.emit("speak_start");
                     break;
                 }
             case "gamestart":
                 {
                     console.log(Date().toString().slice(15, 25), "游戏开始");
-                    if (data = exports.game.start(socket.id)) {
-                        send(data);
-                    }
-                    else {
-                        console.log("人数不足");
-                    }
+                    exports.game.start(socket.id);
+                    // if (data = game.start(socket.id)) {
+                    //     send(data);
+                    // } else {
+                    //     console.log("人数不足");
+                    // }
                     break;
                 }
             case "prmSelect":
                 {
                     console.log(Date().toString().slice(15, 25), "选择了总理", data.user.name);
-                    send(exports.game.setPrm(data.user));
+                    exports.game.setPrm(data.user);
                     break;
                 }
             case "vote":
                 {
                     console.log(Date().toString().slice(15, 25), exports.userService.socketIdToUser[socket.id].name, "投票了");
-                    send(exports.game.getVote(socket.id, data.voteRes));
+                    exports.game.getVote(socket.id, data.voteRes);
                     break;
                 }
             case "proSelect":
                 {
-                    send(exports.game.proSelect(data.pro, data.proX3List));
+                    exports.game.proSelect(data.pro, data.proX3List);
                     break;
                 }
             case "invPlayer":
                 {
-                    send(exports.game.invPlayer(data.target));
+                    exports.game.invPlayer(data.target);
                     break;
                 }
             case "toKill":
                 {
-                    send(exports.game.toKill(data.target));
+                    exports.game.toKill(data.target);
                     break;
                 }
             case "preSelect":
                 {
-                    send(exports.game.selectPre(data.user, true));
+                    exports.game.selectPre(data.user, true);
+                    break;
+                }
+            case "speak_end":
+                {
+                    myEmitter_1.myEmitter.emit("speak_end");
+                    break;
+                }
+            // 普通文字消息
+            case "sendMsg":
+                {
+                    console.log(Date().toString().slice(15, 25), socket.id, "发言");
+                    var dataOut = new msgData_1.MsgData();
+                    dataOut.msgFrom = exports.userService.socketIdToUser[socket.id];
+                    dataOut.msg = data.msg;
+                    dataOut.toWho = exports.userService.userList;
+                    io.emit("system", dataOut);
                     break;
                 }
             default:
                 console.log(Date().toString().slice(15, 25), "神秘的未定义请求");
         }
     });
+});
+myEmitter_1.myEmitter.on("Send_Sth", function (data) {
+    if (Array.isArray(data.toWho)) {
+        for (var _i = 0, _a = data.toWho; _i < _a.length; _i++) {
+            var v_toWho = _a[_i];
+            socketIdtoSocket[v_toWho.socketId].emit("system", data);
+        }
+    }
+    else {
+        socketIdtoSocket[data.toWho.socketId].emit("system", data);
+    }
+});
+myEmitter_1.myEmitter.on("speak_start", function () {
+    // 通知所有玩家 进入发言状态
+    var data = new data_1.Data();
+    data.type = "speak_start";
+    data.toWho = exports.game.playerList;
+    myEmitter_1.myEmitter.emit("Send_Sth", data);
+    // 启动发言计时
+    var msgData = new msgData_1.MsgData();
+    msgData.toWho = exports.game.playerList;
+    msgData.speakTime = exports.game.speakTime;
+    msgData.whoIsSpeaking = exports.game.pre;
+    myEmitter_1.myEmitter.emit("Send_Sth", msgData);
+    var timer = setTimeout(function () {
+        msgData.whoIsSpeaking = exports.game.prm;
+        myEmitter_1.myEmitter.emit("Send_Sth", msgData);
+        timer = setTimeout(function () {
+            console.log("时间到,发言结束");
+        }, exports.game.speakTime * 1000);
+        myEmitter_1.myEmitter.once("speak_end", function () {
+            console.log("对方主动结束发言");
+            clearTimeout(timer);
+        });
+    }, exports.game.speakTime * 1000);
+    myEmitter_1.myEmitter.once("speak_end", function () {
+        console.log("对方主动结束发言");
+        clearTimeout(timer);
+        msgData.whoIsSpeaking = exports.game.prm;
+        myEmitter_1.myEmitter.emit("Send_Sth", msgData);
+        timer = setTimeout(function () {
+            console.log("时间到,发言结束");
+        }, exports.game.speakTime * 1000);
+        myEmitter_1.myEmitter.once("speak_end", function () {
+            console.log("对方主动结束发言");
+            clearTimeout(timer);
+        });
+    });
+    // 总统发言
+    // 总理发言
+    // 其他玩家发言
+    var SurvivalCount = 0;
+    exports.game.playerList.filter(function (t) {
+        if (t.isSurvival) {
+            SurvivalCount++;
+        }
+    });
+    for (var i = 1; i < SurvivalCount; i++) {
+    }
 });
 function send(data) {
     if (Array.isArray(data)) {
