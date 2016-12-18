@@ -136,71 +136,58 @@ myEmitter.on("Send_Sth", (data) => {
 
 myEmitter.on("speak_start", () => {
     // 通知所有玩家 进入发言状态
+    console.log("speak_start");
     let data = new Data();
     data.type = "speak_start";
     data.toWho = game.playerList;
     myEmitter.emit("Send_Sth", data);
-    // 启动发言计时
-
-    let msgData = new MsgData();
-    msgData.toWho = game.playerList;
-    msgData.speakTime = game.speakTime;
-    msgData.whoIsSpeaking = game.pre;
-    myEmitter.emit("Send_Sth", msgData);
-
-    let timer = setTimeout(() => {
-        msgData.whoIsSpeaking = game.prm;
-        myEmitter.emit("Send_Sth", msgData);
-        timer = setTimeout(() => {
-            console.log("时间到,发言结束");
-        }, game.speakTime * 1000);
-        myEmitter.once("speak_end", () => {
-            console.log("对方主动结束发言");
-            clearTimeout(timer);
-        });
-
-    }, game.speakTime * 1000);
-
-
-
-    myEmitter.once("speak_end", () => {
-        console.log("对方主动结束发言");
-        clearTimeout(timer);
-        msgData.whoIsSpeaking = game.prm;
-        myEmitter.emit("Send_Sth", msgData);
-
-        timer = setTimeout(() => {
-            console.log("时间到,发言结束");
-        }, game.speakTime * 1000);
-
-        myEmitter.once("speak_end", () => {
-            console.log("对方主动结束发言");
-            clearTimeout(timer);
-
-        });
-
-
-
-    });
-
-    // 总统发言
-
-    // 总理发言
-
-
-    // 其他玩家发言
-    let SurvivalCount = 0;
-    game.playerList.filter(t => {
-        if (t.isSurvival) {
-            SurvivalCount++;
+    speakAll();
+    async function speakAll() {
+        await speakPlease(game.pre);
+        if (game.prm.isSurvival) {
+            await speakPlease(game.prm);
         }
-    });
-    for (let i = 1; i < SurvivalCount; i++) {
-
+        let preNo = game.playerList.indexOf(game.pre);
+        console.log("总统编号", preNo);
+        for (let i = 0; i < game.playerList.length; i++) {
+            if (!game.playerList[preNo].isPre && !game.playerList[preNo].isPrm && game.playerList[preNo].isSurvival) {
+                await speakPlease(game.playerList[preNo]);
+            }
+            if (preNo === game.playerList.length - 1) {
+                preNo = 0;
+            } else {
+                preNo++;
+            }
+        }
+        myEmitter.emit("speak_endAll");
+    }
+    function speakPlease(who: User) {
+        let msgDataToAll = new MsgData();
+        msgDataToAll.toWho = game.playerList;
+        msgDataToAll.speakTime = game.speakTime;
+        msgDataToAll.whoIsSpeaking = who;
+        myEmitter.emit("Send_Sth", msgDataToAll);
+        console.log("发言消息发送", who.name);
+        let speakTimeout = new Promise(resolve => {
+            console.log("发言计时终止器启动");
+            setTimeout(() => {
+                console.log("时间到,发言结束");
+                resolve();
+            }, game.speakTime * 1000);
+        });
+        let speakPlayerEnd = new Promise(resolve => {
+            console.log("发言用户终止器启动");
+            myEmitter.once("speak_end", () => {
+                console.log("对方主动结束发言");
+                resolve();
+            });
+        });
+        return Promise.race([speakTimeout, speakPlayerEnd]);
     }
 
-
 });
+
+
 
 
 
