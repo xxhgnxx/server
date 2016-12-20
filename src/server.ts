@@ -102,6 +102,35 @@ io.on("connection", socket => {
                     myEmitter.emit("speak_end");
                     break;
                 }
+            case "veto_all":
+                {
+                    if (typeof data.other === "undefined") {
+                        let dataOut = new Data();
+                        dataOut.type = "veto_all";
+                        dataOut.toWho = game.playerList;
+                        io.emit("system", dataOut);
+                        break;
+                    } else {
+                        if (data.other) {
+                            console.log("同意否决");
+                            game.veto_all();
+
+                        } else {
+                            console.log("反对否决");
+                            // todo  通知玩家
+                            let dataOut = new Data();
+                            dataOut.type = "veto_all";
+                            dataOut.other = data.other;
+                            dataOut.toWho = game.playerList;
+                            io.emit("system", dataOut);
+                        }
+
+
+
+                    }
+                    break;
+                }
+
 
             // 普通文字消息
             case "sendMsg":
@@ -110,6 +139,7 @@ io.on("connection", socket => {
                     let dataOut = new MsgData();
                     dataOut.msgFrom = userService.socketIdToUser[socket.id];
                     dataOut.msg = data.msg;
+                    dataOut.type = "send_msg";
                     dataOut.toWho = userService.userList;
                     io.emit("system", dataOut);
                     break;
@@ -163,26 +193,30 @@ myEmitter.on("speak_start", () => {
     }
     function speakPlease(who: User) {
         let msgDataToAll = new MsgData();
+        msgDataToAll.type = "newPlayerSpeak";
         msgDataToAll.toWho = game.playerList;
         msgDataToAll.speakTime = game.speakTime;
         msgDataToAll.whoIsSpeaking = who;
         myEmitter.emit("Send_Sth", msgDataToAll);
         console.log("发言消息发送", who.name);
-        let speakTimeout = new Promise(resolve => {
-            console.log("发言计时终止器启动");
-            setTimeout(() => {
-                console.log("时间到,发言结束");
-                resolve();
+
+        return new Promise(resolve => {
+            let this_timer = setTimeout(() => {
+                myEmitter.removeListener("speak_end", () => {
+                });
+                resolve("时间到,发言结束");
             }, game.speakTime * 1000);
-        });
-        let speakPlayerEnd = new Promise(resolve => {
-            console.log("发言用户终止器启动");
             myEmitter.once("speak_end", () => {
-                console.log("对方主动结束发言");
-                resolve();
+                clearTimeout(this_timer);
+                resolve("对方主动结束发言");
             });
+        }).then((x) => {
+            // test
+            let data = new Data();
+            data.type = "someone_speak_end";
+            data.toWho = game.playerList;
+            myEmitter.emit("Send_Sth", data);
         });
-        return Promise.race([speakTimeout, speakPlayerEnd]);
     }
 
 });

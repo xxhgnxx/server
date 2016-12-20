@@ -10,6 +10,7 @@ export class User {
     isPre: boolean = false;
     isPrm: boolean = false;
     role: string = "x";
+    canBeSelect: boolean = true;
     constructor(name: string) {
         this.name = name;
     }

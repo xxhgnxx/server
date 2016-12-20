@@ -33,9 +33,18 @@ export class UserService {
         if (this.socketIdToUser[socketId]) {
             this.socketIdToUser[socketId].isOnline = false;
             if (!game.started) {
+                console.log("游戏没开始，从playerlist中剔除该用户");
                 this.socketIdToUser[socketId].isSeat = false;
                 game.playerList.splice(game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
             }
+
+// 测试代码---------------
+
+            this.socketIdToUser[socketId].isSeat = false;
+            game.playerList.splice(game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+
+// 测试代码---------------
+
             this.socketIdToUser.delete(socketId);
             console.log(Date().toString().slice(15, 25), this.socketIdToUser[socketId].name, "离线");
             return this.socketIdToUser[socketId].name + "离线";

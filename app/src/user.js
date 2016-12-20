@@ -10,6 +10,7 @@ var User = (function () {
         this.isPre = false;
         this.isPrm = false;
         this.role = "x";
+        this.canBeSelect = true;
         this.name = name;
     }
     User.prototype.userSetNo = function (n) {

@@ -29,9 +29,14 @@ var UserService = (function () {
         if (this.socketIdToUser[socketId]) {
             this.socketIdToUser[socketId].isOnline = false;
             if (!server_1.game.started) {
+                console.log("游戏没开始，从playerlist中剔除该用户");
                 this.socketIdToUser[socketId].isSeat = false;
                 server_1.game.playerList.splice(server_1.game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
             }
+            // 测试代码---------------
+            this.socketIdToUser[socketId].isSeat = false;
+            server_1.game.playerList.splice(server_1.game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+            // 测试代码---------------
             this.socketIdToUser.delete(socketId);
             console.log(Date().toString().slice(15, 25), this.socketIdToUser[socketId].name, "离线");
             return this.socketIdToUser[socketId].name + "离线";
