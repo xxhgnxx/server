@@ -45,6 +45,8 @@ var myEmitter_1 = require("./myEmitter");
 var socketIdtoSocket = new Map();
 io.on("connection", function (socket) {
     console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
+    io.emit("ok");
+    socketIdtoSocket[socket.id] = socket;
     socket.on("disconnect", function () {
         console.log(Date().toString().slice(15, 25), socket.id, "离线");
         socketIdtoSocket.delete(socket.id);
@@ -60,16 +62,8 @@ io.on("connection", function (socket) {
         switch (data.type) {
             case "login":
                 {
-                    console.log(Date().toString().slice(15, 25), "login", data.name);
-                    socketIdtoSocket[socket.id] = socket;
-                    var dataOut = new data_1.Data();
-                    dataOut.type = "loginSuccess";
-                    dataOut.msg = exports.userService.login(socket, data.name);
-                    dataOut.user = exports.userService.socketIdToUser[socket.id];
-                    dataOut.socketId = socket.id;
-                    dataOut.userList = exports.userService.userList;
-                    dataOut.toWho = exports.userService.userList;
-                    send(dataOut);
+                    console.log(Date().toString().slice(15, 25), "try to login", data.name);
+                    send(exports.userService.login(socket, data));
                     break;
                 }
             case "userSeat":

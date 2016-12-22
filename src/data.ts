@@ -5,9 +5,15 @@ export class Data {
     type: string;
     toWho: Array<User> | User;
     name: string;
+    pass: string;
     msg: string;
     yourself: User;
     user: User;
+
+    // 登陆相关
+    id: string;
+    login: boolean;
+    back: boolean;
 
     // 游戏相关
     target: User;  //  收到影响的玩家
@@ -47,6 +53,7 @@ export class Data {
     prm: User;
     prmTmp: User;  // 待投票的总理
     lastPrm: User;
+
 
     // 其他
     other: any;

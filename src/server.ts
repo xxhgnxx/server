@@ -16,7 +16,8 @@ let socketIdtoSocket = new Map();
 
 io.on("connection", socket => {
     console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
-
+    io.emit("ok");
+    socketIdtoSocket[socket.id] = socket;
     socket.on("disconnect", () => {
         console.log(Date().toString().slice(15, 25), socket.id, "离线");
         socketIdtoSocket.delete(socket.id);
@@ -27,22 +28,16 @@ io.on("connection", socket => {
         io.emit("system", dataOut);
     });
 
-    socket.on("system", data => {
+    socket.on("system", (data: Data) => {
         console.log("收到客户端发来的system请求", data.type, socket.id);
         io.emit(data.key);
         switch (data.type) {
             case "login":
                 {
-                    console.log(Date().toString().slice(15, 25), "login", data.name);
-                    socketIdtoSocket[socket.id] = socket;
-                    let dataOut = new Data();
-                    dataOut.type = "loginSuccess";
-                    dataOut.msg = userService.login(socket, data.name);
-                    dataOut.user = userService.socketIdToUser[socket.id];
-                    dataOut.socketId = socket.id;
-                    dataOut.userList = userService.userList;
-                    dataOut.toWho = userService.userList;
-                    send(dataOut);
+                    console.log(Date().toString().slice(15, 25), "try to login", data.name);
+
+
+                    send(userService.login(socket, data));
                     break;
                 }
             case "userSeat":
@@ -148,6 +143,7 @@ io.on("connection", socket => {
             default:
                 console.log(Date().toString().slice(15, 25), "神秘的未定义请求");
         }
+
     });
 });
 
