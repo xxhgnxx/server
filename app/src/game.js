@@ -544,7 +544,7 @@ var Game = (function () {
     // 无技能
     Game.prototype.nothing = function () {
         console.log("无技能");
-        // setTimeout(() => { myEmitter.emit("skill_is_done"); }, 2000);
+        setTimeout(function () { myEmitter_1.myEmitter.emit("skill_is_done"); }, 0);
     };
     // 技能：调查身份
     Game.prototype.invPlayer = function (player) {
@@ -575,7 +575,7 @@ var Game = (function () {
                     data2.toWho = this.pre;
                     myEmitter_1.myEmitter.emit("Send_Sth", data2);
                     // todo 玩家确认过程
-                    myEmitter_1.myEmitter.emit("skill_is_done");
+                    setTimeout(function () { myEmitter_1.myEmitter.emit("skill_is_done"); }, 0);
                 }
                 return [2 /*return*/];
             });
@@ -592,7 +592,7 @@ var Game = (function () {
                 data.type = "preSelect";
                 data.toWho = this.playerList;
                 myEmitter_1.myEmitter.emit("Send_Sth", data);
-                myEmitter_1.myEmitter.emit("skill_is_done");
+                setTimeout(function () { myEmitter_1.myEmitter.emit("skill_is_done"); }, 0);
                 return [2 /*return*/];
             });
         });
@@ -640,7 +640,7 @@ var Game = (function () {
                     ;
                 }
             }
-            myEmitter_1.myEmitter.emit("skill_is_done");
+            setTimeout(function () { myEmitter_1.myEmitter.emit("skill_is_done"); }, 0);
         }
     };
     // 技能：查看法案

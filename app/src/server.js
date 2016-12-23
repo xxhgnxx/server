@@ -45,7 +45,7 @@ var myEmitter_1 = require("./myEmitter");
 var socketIdtoSocket = new Map();
 io.on("connection", function (socket) {
     console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
-    io.emit("ok");
+    socket.emit("ok");
     socketIdtoSocket[socket.id] = socket;
     socket.on("disconnect", function () {
         console.log(Date().toString().slice(15, 25), socket.id, "离线");
@@ -53,7 +53,7 @@ io.on("connection", function (socket) {
         var dataOut = new data_1.Data();
         dataOut.type = "logout";
         dataOut.msg = exports.userService.logout(socket.id);
-        dataOut.playerList = exports.userService.userList;
+        dataOut.userList = exports.userService.userList;
         io.emit("system", dataOut);
     });
     socket.on("system", function (data) {
@@ -64,12 +64,26 @@ io.on("connection", function (socket) {
                 {
                     console.log(Date().toString().slice(15, 25), "try to login", data.name);
                     send(exports.userService.login(socket, data));
+                    var dataOut = new data_1.Data();
+                    dataOut.type = "updata";
+                    dataOut.userList = exports.userService.userList;
+                    io.emit("system", dataOut);
+                    break;
+                }
+            case "quickLogin":
+                {
+                    console.log(Date().toString().slice(15, 25), "try to quickLogin", data.id);
+                    send(exports.userService.quickLogin(socket, data));
+                    var dataOut = new data_1.Data();
+                    dataOut.type = "updata";
+                    dataOut.userList = exports.userService.userList;
+                    io.emit("system", dataOut);
                     break;
                 }
             case "userSeat":
                 {
-                    console.log(Date().toString().slice(15, 25), "尝试坐下", data.name);
-                    myEmitter_1.myEmitter.emit("speak_start");
+                    console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
+                    exports.userService.userSeat(socket.id);
                     break;
                 }
             case "gamestart":

@@ -10,7 +10,8 @@ export class UserService {
     gamelist = new Array<User>();
     socketIdToUser = new Map<string, User>();
     NameToPass = new Map<string, string>();
-    idToUser = new Map<string, string>();
+    idToUsername = new Map<string, string>();
+    usernameToId = new Map<string, string>();
     constructor() { }
 
     login(socket, data: Data): Data {
@@ -20,50 +21,41 @@ export class UserService {
             if (data.pass === this.NameToPass[data.name]) {
                 console.log("密码正确");
                 console.log(Date().toString().slice(15, 25), "返回", data.name);
-
+                this.idToUsername.delete(this.usernameToId[me.name]);
                 let id = this.idgen();
-                this.idToUser[id] = me;
+                this.idToUsername[id] = me.name;
+                this.usernameToId[me.name] = id;
                 this.socketIdToUser[socket.id] = me;
                 me.isOnline = true;
                 me.socketId = socket.id;
                 let dataout = new Data();
-                dataout.type = "loginBack";
+                dataout.type = "loginSuccess";
                 dataout.id = id;
                 dataout.login = true;
                 dataout.socketId = socket.id;
                 dataout.toWho = me;
                 dataout.yourself = me;
                 return dataout;
-
-
-
             } else {
                 console.log("密码错误");
                 let dataout = new Data();
-                dataout.type = "passWrong";
+                dataout.type = "Login_fail";
+                dataout.login = false;
                 let tmpuser = new User(data.name);
                 tmpuser.socketId = socket.id;
                 dataout.toWho = tmpuser;
                 return dataout;
-
-
-
             }
-
-
-
-
         } else {
             console.log(Date().toString().slice(15, 25), "用户新加入", data.name);
             this.socketIdToUser[socket.id] = new User(data.name);
             this.socketIdToUser[socket.id].socketId = socket.id;
             this.NameToPass[data.name] = data.pass;
             let id = this.idgen();
-            this.idToUser[id] = this.socketIdToUser[socket.id];
+            this.idToUsername[id] = this.socketIdToUser[socket.id].name;
+            this.usernameToId[this.socketIdToUser[socket.id].name] = id;
             this.userList.push(this.socketIdToUser[socket.id]);
-
-            let tmp = this.userSeat(socket.id); // 测试用
-
+            // let tmp = this.userSeat(socket.id); // 测试用
             let dataout = new Data();
             dataout.type = "loginSuccess";
             dataout.id = id;
@@ -74,6 +66,45 @@ export class UserService {
             return dataout;
         }
     }
+
+    quickLogin(socket, data: Data): Data {
+        // todo  登陆成功后，删除以前的id
+        if (this.idToUsername[data.id]) {
+            console.log("指纹匹配成功");
+            let me = this.userList.filter(t => { return t.name === this.idToUsername[data.id]; })[0];
+            this.socketIdToUser.delete(data.id);
+            let id = this.idgen();
+
+            this.idToUsername[id] = me.name;
+            this.socketIdToUser[socket.id] = me;
+            me.isOnline = true;
+            me.socketId = socket.id;
+
+
+            let dataout = new Data();
+            dataout.type = "quickloginSuccess";
+            dataout.id = id;
+            dataout.login = true;
+            dataout.socketId = socket.id;
+            dataout.toWho = me;
+            dataout.yourself = me;
+            return dataout;
+        } else {
+            console.log("指纹匹配失败");
+            let dataout = new Data();
+            dataout.type = "quickLogin_fail";
+            dataout.login = false;
+            let tmpuser = new User(data.name);
+            tmpuser.socketId = socket.id;
+            dataout.toWho = tmpuser;
+            return dataout;
+
+        }
+
+
+
+    }
+
 
     logout(socketId): string {
         if (this.socketIdToUser[socketId]) {
@@ -99,15 +130,16 @@ export class UserService {
         }
     }
 
-    userSeat(socketId): string {
+    userSeat(socketId) {
         if (this.socketIdToUser[socketId].isSeat) {
             this.socketIdToUser[socketId].isSeat = false;
-
-            return "站起来" + this.socketIdToUser[socketId].name;
+            game.playerList.splice(game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+            console.log("站起来" + this.socketIdToUser[socketId].name);
         } else {
             this.socketIdToUser[socketId].isSeat = true;
+            game.playerList.push(this.socketIdToUser[socketId]);
+            console.log("坐下了" + this.socketIdToUser[socketId].name);
 
-            return "坐下了" + this.socketIdToUser[socketId].name;
         }
     }
 

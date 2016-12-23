@@ -8,7 +8,8 @@ var UserService = (function () {
         this.gamelist = new Array();
         this.socketIdToUser = new Map();
         this.NameToPass = new Map();
-        this.idToUser = new Map();
+        this.idToUsername = new Map();
+        this.usernameToId = new Map();
     }
     UserService.prototype.login = function (socket, data) {
         var me = this.userList.filter(function (t) { return t.name === data.name; })[0];
@@ -17,13 +18,15 @@ var UserService = (function () {
             if (data.pass === this.NameToPass[data.name]) {
                 console.log("密码正确");
                 console.log(Date().toString().slice(15, 25), "返回", data.name);
+                this.idToUsername.delete(this.usernameToId[me.name]);
                 var id = this.idgen();
-                this.idToUser[id] = me;
+                this.idToUsername[id] = me.name;
+                this.usernameToId[me.name] = id;
                 this.socketIdToUser[socket.id] = me;
                 me.isOnline = true;
                 me.socketId = socket.id;
                 var dataout = new data_1.Data();
-                dataout.type = "loginBack";
+                dataout.type = "loginSuccess";
                 dataout.id = id;
                 dataout.login = true;
                 dataout.socketId = socket.id;
@@ -34,7 +37,8 @@ var UserService = (function () {
             else {
                 console.log("密码错误");
                 var dataout = new data_1.Data();
-                dataout.type = "passWrong";
+                dataout.type = "Login_fail";
+                dataout.login = false;
                 var tmpuser = new user_1.User(data.name);
                 tmpuser.socketId = socket.id;
                 dataout.toWho = tmpuser;
@@ -47,9 +51,10 @@ var UserService = (function () {
             this.socketIdToUser[socket.id].socketId = socket.id;
             this.NameToPass[data.name] = data.pass;
             var id = this.idgen();
-            this.idToUser[id] = this.socketIdToUser[socket.id];
+            this.idToUsername[id] = this.socketIdToUser[socket.id].name;
+            this.usernameToId[this.socketIdToUser[socket.id].name] = id;
             this.userList.push(this.socketIdToUser[socket.id]);
-            var tmp = this.userSeat(socket.id); // 测试用
+            // let tmp = this.userSeat(socket.id); // 测试用
             var dataout = new data_1.Data();
             dataout.type = "loginSuccess";
             dataout.id = id;
@@ -57,6 +62,38 @@ var UserService = (function () {
             dataout.socketId = socket.id;
             dataout.toWho = this.socketIdToUser[socket.id];
             dataout.yourself = this.socketIdToUser[socket.id];
+            return dataout;
+        }
+    };
+    UserService.prototype.quickLogin = function (socket, data) {
+        var _this = this;
+        // todo  登陆成功后，删除以前的id
+        if (this.idToUsername[data.id]) {
+            console.log("指纹匹配成功");
+            var me = this.userList.filter(function (t) { return t.name === _this.idToUsername[data.id]; })[0];
+            this.socketIdToUser.delete(data.id);
+            var id = this.idgen();
+            this.idToUsername[id] = me.name;
+            this.socketIdToUser[socket.id] = me;
+            me.isOnline = true;
+            me.socketId = socket.id;
+            var dataout = new data_1.Data();
+            dataout.type = "quickloginSuccess";
+            dataout.id = id;
+            dataout.login = true;
+            dataout.socketId = socket.id;
+            dataout.toWho = me;
+            dataout.yourself = me;
+            return dataout;
+        }
+        else {
+            console.log("指纹匹配失败");
+            var dataout = new data_1.Data();
+            dataout.type = "quickLogin_fail";
+            dataout.login = false;
+            var tmpuser = new user_1.User(data.name);
+            tmpuser.socketId = socket.id;
+            dataout.toWho = tmpuser;
             return dataout;
         }
     };
@@ -84,11 +121,13 @@ var UserService = (function () {
     UserService.prototype.userSeat = function (socketId) {
         if (this.socketIdToUser[socketId].isSeat) {
             this.socketIdToUser[socketId].isSeat = false;
-            return "站起来" + this.socketIdToUser[socketId].name;
+            server_1.game.playerList.splice(server_1.game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+            console.log("站起来" + this.socketIdToUser[socketId].name);
         }
         else {
             this.socketIdToUser[socketId].isSeat = true;
-            return "坐下了" + this.socketIdToUser[socketId].name;
+            server_1.game.playerList.push(this.socketIdToUser[socketId]);
+            console.log("坐下了" + this.socketIdToUser[socketId].name);
         }
     };
     UserService.prototype.joinRoom = function (name) { };

@@ -545,7 +545,7 @@ export class Game {
     // 无技能
     nothing() {
         console.log("无技能");
-        // setTimeout(() => { myEmitter.emit("skill_is_done"); }, 2000);
+        setTimeout(() => { myEmitter.emit("skill_is_done"); }, 0);
     }
 
     // 技能：调查身份
@@ -574,7 +574,7 @@ export class Game {
             data2.toWho = this.pre;
             myEmitter.emit("Send_Sth", data2);
             // todo 玩家确认过程
-            myEmitter.emit("skill_is_done");
+            setTimeout(() => { myEmitter.emit("skill_is_done"); }, 0);
         }
 
 
@@ -588,7 +588,7 @@ export class Game {
         data.toWho = this.playerList;
         myEmitter.emit("Send_Sth", data);
 
-        myEmitter.emit("skill_is_done");
+        setTimeout(() => { myEmitter.emit("skill_is_done"); }, 0);
     }
     // 技能：枪决
     toKill(player?: User) {
@@ -634,7 +634,7 @@ export class Game {
 
 
             }
-            myEmitter.emit("skill_is_done");
+            setTimeout(() => { myEmitter.emit("skill_is_done"); }, 0);
         }
 
 

@@ -13,10 +13,9 @@ import { myEmitter } from "./myEmitter";
 
 let socketIdtoSocket = new Map();
 
-
 io.on("connection", socket => {
     console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
-    io.emit("ok");
+    socket.emit("ok");
     socketIdtoSocket[socket.id] = socket;
     socket.on("disconnect", () => {
         console.log(Date().toString().slice(15, 25), socket.id, "离线");
@@ -24,7 +23,7 @@ io.on("connection", socket => {
         let dataOut = new Data();
         dataOut.type = "logout";
         dataOut.msg = userService.logout(socket.id);
-        dataOut.playerList = userService.userList;
+        dataOut.userList = userService.userList;
         io.emit("system", dataOut);
     });
 
@@ -36,15 +35,29 @@ io.on("connection", socket => {
                 {
                     console.log(Date().toString().slice(15, 25), "try to login", data.name);
 
-
                     send(userService.login(socket, data));
+                    let dataOut = new Data();
+                    dataOut.type = "updata";
+                    dataOut.userList = userService.userList;
+                    io.emit("system", dataOut);
+                    break;
+                }
+            case "quickLogin":
+                {
+                    console.log(Date().toString().slice(15, 25), "try to quickLogin", data.id);
+
+
+                    send(userService.quickLogin(socket, data));
+                    let dataOut = new Data();
+                    dataOut.type = "updata";
+                    dataOut.userList = userService.userList;
+                    io.emit("system", dataOut);
                     break;
                 }
             case "userSeat":
                 {
-                    console.log(Date().toString().slice(15, 25), "尝试坐下", data.name);
-
-                    myEmitter.emit("speak_start");
+                    console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
+                    userService.userSeat(socket.id);
 
 
                     break;
