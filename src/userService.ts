@@ -139,7 +139,6 @@ export class UserService {
             this.socketIdToUser[socketId].isSeat = true;
             game.playerList.push(this.socketIdToUser[socketId]);
             console.log("坐下了" + this.socketIdToUser[socketId].name);
-
         }
     }
 

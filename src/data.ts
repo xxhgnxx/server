@@ -46,6 +46,9 @@ export class Data {
     proEffBlue: number; // 蓝法案生效数
     proEffRed: number; // 红法案生效数
 
+    // 游戏过程记录
+    gameMsg: string;
+
     // 角色情况
     pre: User;
     lastPre: User;
@@ -53,6 +56,8 @@ export class Data {
     prm: User;
     prmTmp: User;  // 待投票的总理
     lastPrm: User;
+
+
 
 
     // 其他

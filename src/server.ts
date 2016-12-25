@@ -58,7 +58,11 @@ io.on("connection", socket => {
                 {
                     console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
                     userService.userSeat(socket.id);
-
+                    let userSeatdata = new Data();
+                    userSeatdata.type = "updata";
+                    userSeatdata.userList = userService.userList;
+                    userSeatdata.toWho = userService.userList;
+                    myEmitter.emit("Send_Sth", userSeatdata);
 
                     break;
                 }
@@ -116,11 +120,18 @@ io.on("connection", socket => {
                         let dataOut = new Data();
                         dataOut.type = "veto_all";
                         dataOut.toWho = game.playerList;
+                        dataOut.gameMsg = "总理向总统提出了否决全部法案的建议，等待总统决定";
                         io.emit("system", dataOut);
                         break;
                     } else {
                         if (data.other) {
                             console.log("同意否决");
+                            let dataOut1 = new Data();
+                            dataOut1.type = "通知";
+                            dataOut1.other = data.other;
+                            dataOut1.toWho = game.playerList;
+                            dataOut1.gameMsg = "总统同意了总理全部否决的提议，本届政府失效";
+                            io.emit("system", dataOut1);
                             game.veto_all();
 
                         } else {
@@ -130,6 +141,7 @@ io.on("connection", socket => {
                             dataOut.type = "veto_all";
                             dataOut.other = data.other;
                             dataOut.toWho = game.playerList;
+                            dataOut.gameMsg = "总统反对了全部否却的提议，总理仍然要选择一张法案生效";
                             io.emit("system", dataOut);
                         }
 
@@ -179,6 +191,7 @@ myEmitter.on("speak_start", () => {
     let data = new Data();
     data.type = "speak_start";
     data.toWho = game.playerList;
+    data.gameMsg = "玩家顺序发言开始，请切换到“发言界面查看发言”";
     myEmitter.emit("Send_Sth", data);
     speakAll();
     async function speakAll() {

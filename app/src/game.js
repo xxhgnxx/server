@@ -41,24 +41,12 @@ var msgData_1 = require("./msgData");
 var myEmitter_1 = require("./myEmitter");
 var Game = (function () {
     function Game() {
-        // skillList = new Array<Function | string>();  // 技能列表
-        this.skillList = new Array(); // 技能列表
-        this.proList = new Array(); // 法案牌堆
-        this.proIndex = 16; // 牌堆顶
         this.started = false; // 游戏是否开始
         this.playerList = new Array(); // 加入本次游戏的玩家列表，主要用于消息发送
-        this.proEffBlue = 0; // 法案生效数
-        this.proEffRed = 0; // 法案生效数
-        this.failTimes = 0; // 政府组件失败次数
-        this.isVoted = false;
-        this.voteList = new Array(); // 投票总记录
-        this.voteRes = 0; // 投票结果
-        this.fascist = new Array();
-        this.liberal = new Array();
         // 游戏发言
         this.msgListAll = new Array(); // 总发言记录
         this.msgListNow = new Array(); // 当前发言记录
-        this.speakTime = 20; // 发言时间 设定 单位 秒
+        this.speakTime = 120; // 发言时间 设定 单位 秒
     }
     Game.prototype.start = function (socketId) {
         this.playerList = server_1.userService.userList.filter(function (t) {
@@ -70,7 +58,20 @@ var Game = (function () {
         }
         else {
             console.log("游戏开始", this.playerList.length);
+            //  ------------ 数据初始化start
             this.started = true;
+            this.skillList = new Array();
+            this.proList = new Array(); // 法案牌堆
+            this.proIndex = 16; // 牌堆顶
+            this.voteList = new Array(); // 投票总记录
+            this.fascist = new Array();
+            this.liberal = new Array();
+            this.voteRes = 0;
+            this.proEffBlue = 0; // 法案生效数
+            this.proEffRed = 0; // 法案生效数
+            this.failTimes = 0; // 政府组件失败次数
+            this.isVoted = false;
+            //  ------------ 数据初始化end
             this.selectGame();
             this.makePro();
             this.shuffle();
@@ -84,6 +85,7 @@ var Game = (function () {
             dataOut.user = server_1.userService.socketIdToUser[socketId];
             dataOut.type = "gamestart";
             dataOut.toWho = this.playerList;
+            dataOut.gameMsg = "游戏开始";
             myEmitter_1.myEmitter.emit("Send_Sth", dataOut);
             this.selectPre(this.playerList[Math.floor(Math.random() * this.playerList.length)]);
         }
@@ -253,8 +255,8 @@ var Game = (function () {
         data.pre = this.pre;
         data.prenext = this.prenext;
         data.type = "selectPrm";
-        data.pre = this.pre;
         data.toWho = this.playerList;
+        data.gameMsg = "等待总统 " + this.pre.name + " 选总理..";
         myEmitter_1.myEmitter.emit("Send_Sth", data);
     };
     // 设定总理
@@ -272,6 +274,7 @@ var Game = (function () {
         data.pre = this.pre;
         data.voteCount = this.voteCount;
         data.nowVote = this.nowVote;
+        data.gameMsg = "总统 " + this.pre.name + "  总理 " + this.prmTmp.name + " 请投票..";
         myEmitter_1.myEmitter.emit("Send_Sth", data);
     };
     // 发起投票
@@ -295,6 +298,7 @@ var Game = (function () {
     // 结算投票
     Game.prototype.getVote = function (sockeId, res) {
         var data = new data_1.Data();
+        data.toWho = this.playerList;
         this.nowVote[server_1.userService.socketIdToUser[sockeId].seatNo - 1] = res;
         this.voteCount = this.voteCount + 1;
         if (this.voteCount === this.nowVote.length) {
@@ -305,10 +309,12 @@ var Game = (function () {
                 return t === 4;
             }).length) {
                 // 成功
+                data.gameMsg = "同意票超过半数，政府成立,等待总统 " + this.pre.name + " 选提案";
                 if (this.proEffRed >= 3 && this.prmTmp.role === "Hitler") {
                     //  总理生效 判断希特勒上位
                     console.log("游戏结束");
                     this.gameover("游戏结束，红色胜利");
+                    data.gameMsg = "希特勒在危机时刻上任总理，游戏结束，红色胜利";
                 }
                 else {
                     if (this.prm) {
@@ -328,9 +334,15 @@ var Game = (function () {
                 this.failTimes = this.failTimes + 1;
                 if (this.failTimes === 3) {
                     // 强制生效
+                    data.gameMsg = "同意票未超过半数，政府组建失败，连续三次组建政府失败，法案强制生效一张";
+                    myEmitter_1.myEmitter.emit("Send_Sth", data);
+                    data.gameMsg = null;
                     this.proEff(this.proList[this.proIndex], true);
                 }
                 else {
+                    data.gameMsg = "同意票未超过半数，政府组建失败，切换下任总统候选";
+                    myEmitter_1.myEmitter.emit("Send_Sth", data);
+                    delete data.gameMsg;
                     // say 不发言直接下一届政府
                     this.selectPre(this.prenext);
                 }
@@ -357,7 +369,6 @@ var Game = (function () {
             this.proEff(list[0]); // 法案生效
         }
     };
-    //  否决权生效
     Game.prototype.veto_all = function () {
         var _this = this;
         // todo 通知玩家
@@ -398,6 +409,7 @@ var Game = (function () {
             data.toWho = this.playerList.filter(function (t) {
                 return t.isPre !== true;
             });
+            data.gameMsg = "等待总统选提案";
             data.proIndex = this.proIndex;
             myEmitter_1.myEmitter.emit("Send_Sth", data);
             var data2 = new data_1.Data();
@@ -416,6 +428,7 @@ var Game = (function () {
                 data.toWho = this.playerList.filter(function (t) {
                     return t.isPrm !== true;
                 });
+                data.gameMsg = "总统弃掉了一张卡片，等待总理 " + this.prm.name + " 选提案";
                 data.proList = this.proList;
                 data.proIndex = this.proIndex;
                 myEmitter_1.myEmitter.emit("Send_Sth", data);
@@ -433,6 +446,7 @@ var Game = (function () {
                 data.toWho = this.playerList.filter(function (t) {
                     return t.isPrm !== true;
                 });
+                data.gameMsg = "等待总理 " + this.prm.name + " 选提案..";
                 data.proList = this.proList;
                 data.proIndex = this.proIndex;
                 myEmitter_1.myEmitter.emit("Send_Sth", data);
@@ -461,24 +475,27 @@ var Game = (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        data = new data_1.Data();
                         this.failTimes = 0;
                         this.pro = pro;
                         console.log(pro);
                         if (pro >= 6) {
                             console.log("红色提案生效");
+                            data.gameMsg = "红色提案生效";
                             this.proEffRed = this.proEffRed + 1;
                         }
                         else {
                             console.log("蓝色提案生效");
+                            data.gameMsg = "蓝色提案生效";
                             this.proEffBlue = this.proEffBlue + 1;
                         }
-                        data = new data_1.Data();
                         data.type = "proEff";
                         data.pro = this.pro;
                         data.proEffRed = this.proEffRed;
                         data.proEffBlue = this.proEffBlue;
                         data.toWho = this.playerList;
                         myEmitter_1.myEmitter.emit("Send_Sth", data);
+                        data.gameMsg = null;
                         if (!(this.proEffRed === 6))
                             return [3 /*break*/, 1];
                         this.started = false;
@@ -486,6 +503,7 @@ var Game = (function () {
                         //   todo:结算
                         console.log("游戏结束");
                         this.gameover("游戏结束，红色胜利");
+                        data.gameMsg = "6张红色法案生效，法西斯阵营胜利";
                         return [3 /*break*/, 5];
                     case 1:
                         if (!(this.proEffBlue === 5))
@@ -495,6 +513,7 @@ var Game = (function () {
                         //   todo:结算
                         console.log("游戏结束");
                         this.gameover("游戏结束，蓝色胜利");
+                        data.gameMsg = "5张蓝色法案生效，自由党阵营胜利";
                         return [3 /*break*/, 5];
                     case 2:
                         this.proList.splice(this.proList.indexOf(pro), 1); // 从总牌堆删除生效法案
@@ -532,6 +551,7 @@ var Game = (function () {
                         myEmitter_1.myEmitter.once("speak_endAll", function () {
                             var msgDataToAll = new msgData_1.MsgData();
                             msgDataToAll.toWho = _this.playerList;
+                            msgDataToAll.gameMsg = "玩家顺序发言结束";
                             myEmitter_1.myEmitter.emit("Send_Sth", msgDataToAll);
                             _this.selectPre(_this.prenext); // 切换总统 继续游戏
                         });
@@ -549,7 +569,7 @@ var Game = (function () {
     // 技能：调查身份
     Game.prototype.invPlayer = function (player) {
         return __awaiter(this, void 0, void 0, function () {
-            var data, data2;
+            var data, data2, data3;
             return __generator(this, function (_a) {
                 console.log("调查身份");
                 if (typeof player === "undefined") {
@@ -557,6 +577,7 @@ var Game = (function () {
                     data = new data_1.Data();
                     data.type = "invPlayer";
                     data.toWho = this.playerList;
+                    data.gameMsg = "等待总统调查身份";
                     myEmitter_1.myEmitter.emit("Send_Sth", data);
                 }
                 else {
@@ -574,6 +595,11 @@ var Game = (function () {
                     data2.target = player;
                     data2.toWho = this.pre;
                     myEmitter_1.myEmitter.emit("Send_Sth", data2);
+                    data3 = new data_1.Data();
+                    data3.gameMsg = "总统成功调查了 " + player.name + " 的身份";
+                    data3.type = "通知";
+                    data3.toWho = this.playerList;
+                    myEmitter_1.myEmitter.emit("Send_Sth", data3);
                     // todo 玩家确认过程
                     setTimeout(function () { myEmitter_1.myEmitter.emit("skill_is_done"); }, 0);
                 }
@@ -591,6 +617,7 @@ var Game = (function () {
                 data = new data_1.Data();
                 data.type = "preSelect";
                 data.toWho = this.playerList;
+                data.gameMsg = "等待总统 " + this.pre.name + " 执行权利：指定下任总统..";
                 myEmitter_1.myEmitter.emit("Send_Sth", data);
                 setTimeout(function () { myEmitter_1.myEmitter.emit("skill_is_done"); }, 0);
                 return [2 /*return*/];
@@ -606,6 +633,7 @@ var Game = (function () {
             var data = new data_1.Data();
             data.type = "toKill";
             data.toWho = this.playerList;
+            data.gameMsg = "等待总统 " + this.pre.name + " 执行权利：决定枪决的目标";
             myEmitter_1.myEmitter.emit("Send_Sth", data);
         }
         else {
@@ -618,10 +646,12 @@ var Game = (function () {
             data.target = player;
             data.playerList = this.playerList;
             data.toWho = this.playerList;
+            data.gameMsg = "总统枪决了 " + player.name;
             myEmitter_1.myEmitter.emit("Send_Sth", data);
             player = server_1.userService.socketIdToUser[player.socketId];
             if (player.role === "Hitler") {
                 console.log("游戏结束");
+                data.gameMsg = "总统枪决的人是希特勒 游戏结束，自由党胜利";
                 this.gameover("游戏结束，蓝色胜利");
             }
             else {
@@ -654,6 +684,11 @@ var Game = (function () {
             data.proX3List.push(this.proList[this.proIndex - i]);
         }
         myEmitter_1.myEmitter.emit("Send_Sth", data);
+        var data2 = new data_1.Data();
+        data2.type = "通知";
+        data2.toWho = this.playerList;
+        data2.gameMsg = "总统执行了权利：查看了接下来的三张法案牌";
+        myEmitter_1.myEmitter.emit("Send_Sth", data2);
         // todo 玩家查看法案时的确认过程
         setTimeout(function () { myEmitter_1.myEmitter.emit("skill_is_done"); }, 2000);
     };
