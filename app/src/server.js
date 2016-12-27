@@ -108,7 +108,7 @@ io.on("connection", function (socket) {
                     exports.game.setPrm(data.user);
                     break;
                 }
-            case "vote":
+            case "player_vote":
                 {
                     console.log(Date().toString().slice(15, 25), exports.userService.socketIdToUser[socket.id].name, "投票了");
                     exports.game.getVote(socket.id, data.voteRes);

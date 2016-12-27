@@ -83,7 +83,7 @@ io.on("connection", socket => {
                     game.setPrm(data.user);
                     break;
                 }
-            case "vote":
+            case "player_vote":
                 {
                     console.log(Date().toString().slice(15, 25), userService.socketIdToUser[socket.id].name, "投票了");
                     game.getVote(socket.id, data.voteRes);

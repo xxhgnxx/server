@@ -85,6 +85,7 @@ export class Game {
             this.selectPre(this.playerList[Math.floor(Math.random() * this.playerList.length)]);
         }
     }
+
     setPlayer() {
         console.log("分发玩家身份牌,打乱玩家座位，生成新的顺序");
         let tmp;
@@ -717,6 +718,5 @@ export class Game {
     }
 
 
-    constructor() {
-    }
+    constructor() { }
 }
