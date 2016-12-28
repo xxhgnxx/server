@@ -38,7 +38,8 @@ var io = require("socket.io").listen(81);
 var userService_1 = require("./userService");
 var game_1 = require("./game");
 var data_1 = require("./data");
-var msgData_1 = require("./msgData");
+var data_2 = require("./data");
+var data_3 = require("./data");
 exports.userService = new userService_1.UserService();
 exports.game = new game_1.Game();
 var myEmitter_1 = require("./myEmitter");
@@ -50,9 +51,8 @@ io.on("connection", function (socket) {
     socket.on("disconnect", function () {
         console.log(Date().toString().slice(15, 25), socket.id, "离线");
         socketIdtoSocket.delete(socket.id);
-        var dataOut = new data_1.Data();
-        dataOut.type = "logout";
-        dataOut.msg = exports.userService.logout(socket.id);
+        var dataOut = new data_1.Data("logout");
+        dataOut.other = exports.userService.logout(socket.id);
         dataOut.userList = exports.userService.userList;
         io.emit("system", dataOut);
     });
@@ -64,8 +64,7 @@ io.on("connection", function (socket) {
                 {
                     console.log(Date().toString().slice(15, 25), "try to login", data.name);
                     send(exports.userService.login(socket, data));
-                    var dataOut = new data_1.Data();
-                    dataOut.type = "updata";
+                    var dataOut = new data_1.Data("updata");
                     dataOut.userList = exports.userService.userList;
                     io.emit("system", dataOut);
                     break;
@@ -74,8 +73,7 @@ io.on("connection", function (socket) {
                 {
                     console.log(Date().toString().slice(15, 25), "try to quickLogin", data.id);
                     send(exports.userService.quickLogin(socket, data));
-                    var dataOut = new data_1.Data();
-                    dataOut.type = "updata";
+                    var dataOut = new data_1.Data("updata");
                     dataOut.userList = exports.userService.userList;
                     io.emit("system", dataOut);
                     break;
@@ -84,10 +82,8 @@ io.on("connection", function (socket) {
                 {
                     console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
                     exports.userService.userSeat(socket.id);
-                    var userSeatdata = new data_1.Data();
-                    userSeatdata.type = "updata";
+                    var userSeatdata = new data_1.Data("updata");
                     userSeatdata.userList = exports.userService.userList;
-                    userSeatdata.toWho = exports.userService.userList;
                     myEmitter_1.myEmitter.emit("Send_Sth", userSeatdata);
                     break;
                 }
@@ -95,11 +91,6 @@ io.on("connection", function (socket) {
                 {
                     console.log(Date().toString().slice(15, 25), "游戏开始");
                     exports.game.start(socket.id);
-                    // if (data = game.start(socket.id)) {
-                    //     send(data);
-                    // } else {
-                    //     console.log("人数不足");
-                    // }
                     break;
                 }
             case "prmSelect":
@@ -142,32 +133,26 @@ io.on("connection", function (socket) {
             case "veto_all":
                 {
                     if (typeof data.other === "undefined") {
-                        var dataOut = new data_1.Data();
-                        dataOut.type = "veto_all";
-                        dataOut.toWho = exports.game.playerList;
-                        dataOut.gameMsg = "总理向总统提出了否决全部法案的建议，等待总统决定";
+                        var dataOut = new data_1.Data("veto_all");
+                        dataOut.msg = new data_3.Msg("system", "总理向总统提出了否决全部法案的建议，等待总统决定");
                         io.emit("system", dataOut);
                         break;
                     }
                     else {
                         if (data.other) {
                             console.log("同意否决");
-                            var dataOut1 = new data_1.Data();
-                            dataOut1.type = "通知";
+                            var dataOut1 = new data_1.Data("通知");
                             dataOut1.other = data.other;
-                            dataOut1.toWho = exports.game.playerList;
-                            dataOut1.gameMsg = "总统同意了总理全部否决的提议，本届政府失效";
+                            dataOut1.msg = new data_3.Msg("system", "总统同意了总理全部否决的提议，本届政府失效");
                             io.emit("system", dataOut1);
                             exports.game.veto_all();
                         }
                         else {
                             console.log("反对否决");
                             // todo  通知玩家
-                            var dataOut = new data_1.Data();
-                            dataOut.type = "veto_all";
+                            var dataOut = new data_1.Data("veto_all");
                             dataOut.other = data.other;
-                            dataOut.toWho = exports.game.playerList;
-                            dataOut.gameMsg = "总统反对了全部否却的提议，总理仍然要选择一张法案生效";
+                            dataOut.msg = new data_3.Msg("system", "总统反对了全部否却的提议，总理仍然要选择一张法案生效");
                             io.emit("system", dataOut);
                         }
                     }
@@ -177,11 +162,9 @@ io.on("connection", function (socket) {
             case "sendMsg":
                 {
                     console.log(Date().toString().slice(15, 25), socket.id, "发言");
-                    var dataOut = new msgData_1.MsgData();
+                    var dataOut = new data_2.MsgData(exports.userService.socketIdToUser[socket.id]);
                     dataOut.msgFrom = exports.userService.socketIdToUser[socket.id];
                     dataOut.msg = data.msg;
-                    dataOut.type = "send_msg";
-                    dataOut.toWho = exports.userService.userList;
                     io.emit("system", dataOut);
                     break;
                 }
@@ -190,24 +173,11 @@ io.on("connection", function (socket) {
         }
     });
 });
-myEmitter_1.myEmitter.on("Send_Sth", function (data) {
-    if (Array.isArray(data.toWho)) {
-        for (var _i = 0, _a = data.toWho; _i < _a.length; _i++) {
-            var v_toWho = _a[_i];
-            socketIdtoSocket[v_toWho.socketId].emit("system", data);
-        }
-    }
-    else {
-        socketIdtoSocket[data.toWho.socketId].emit("system", data);
-    }
-});
 myEmitter_1.myEmitter.on("speak_start", function () {
     // 通知所有玩家 进入发言状态
     console.log("speak_start");
-    var data = new data_1.Data();
-    data.type = "speak_start";
-    data.toWho = exports.game.playerList;
-    data.gameMsg = "玩家顺序发言开始，请切换到“发言界面查看发言”";
+    var data = new data_1.Data("speak_start");
+    data.msg = new data_3.Msg("system", "玩家顺序发言开始，请切换到“发言界面查看发言”");
     myEmitter_1.myEmitter.emit("Send_Sth", data);
     speakAll();
     function speakAll() {
@@ -218,11 +188,13 @@ myEmitter_1.myEmitter.on("speak_start", function () {
                     case 0: return [4 /*yield*/, speakPlease(exports.game.pre)];
                     case 1:
                         _a.sent();
+                        myEmitter_1.myEmitter.emit("Send_Sth", new data_1.Data("someone_speak_end"));
                         if (!exports.game.prm.isSurvival)
                             return [3 /*break*/, 3];
                         return [4 /*yield*/, speakPlease(exports.game.prm)];
                     case 2:
                         _a.sent();
+                        myEmitter_1.myEmitter.emit("Send_Sth", new data_1.Data("someone_speak_end"));
                         _a.label = 3;
                     case 3:
                         preNo = exports.game.playerList.indexOf(exports.game.pre);
@@ -237,6 +209,7 @@ myEmitter_1.myEmitter.on("speak_start", function () {
                         return [4 /*yield*/, speakPlease(exports.game.playerList[preNo])];
                     case 5:
                         _a.sent();
+                        myEmitter_1.myEmitter.emit("Send_Sth", new data_1.Data("someone_speak_end"));
                         _a.label = 6;
                     case 6:
                         if (preNo === exports.game.playerList.length - 1) {
@@ -257,9 +230,8 @@ myEmitter_1.myEmitter.on("speak_start", function () {
         });
     }
     function speakPlease(who) {
-        var msgDataToAll = new msgData_1.MsgData();
+        var msgDataToAll = new data_2.MsgData(who);
         msgDataToAll.type = "newPlayerSpeak";
-        msgDataToAll.toWho = exports.game.playerList;
         msgDataToAll.speakTime = exports.game.speakTime;
         msgDataToAll.whoIsSpeaking = who;
         myEmitter_1.myEmitter.emit("Send_Sth", msgDataToAll);
@@ -274,39 +246,43 @@ myEmitter_1.myEmitter.on("speak_start", function () {
                 clearTimeout(this_timer);
                 resolve("对方主动结束发言");
             });
-        }).then(function (x) {
-            // test
-            var data = new data_1.Data();
-            data.type = "someone_speak_end";
-            data.toWho = exports.game.playerList;
-            myEmitter_1.myEmitter.emit("Send_Sth", data);
         });
+        // .then((x) => {
+        //   // test
+        //   let data = new Data("someone_speak_end");
+        //   myEmitter.emit("Send_Sth", data);
+        // });
     }
 });
-function send(data) {
-    if (Array.isArray(data)) {
-        for (var _i = 0, data_2 = data; _i < data_2.length; _i++) {
-            var v_data = data_2[_i];
-            if (Array.isArray(v_data.toWho)) {
-                for (var _a = 0, _b = v_data.toWho; _a < _b.length; _a++) {
-                    var v_toWho = _b[_a];
-                    socketIdtoSocket[v_toWho.socketId].emit("system", v_data);
-                }
-            }
-            else {
-                socketIdtoSocket[v_data.toWho.socketId].emit("system", v_data);
-            }
+myEmitter_1.myEmitter.on("Send_Sth", function (data) {
+    if (typeof data.toWho === "undefined") {
+        console.log("发给所有人", data.type);
+        io.emit("system", data);
+        return;
+    }
+    if (Array.isArray(data.toWho)) {
+        for (var _i = 0, _a = data.toWho; _i < _a.length; _i++) {
+            var v_toWho = _a[_i];
+            socketIdtoSocket[v_toWho.socketId].emit("system", data);
         }
     }
     else {
-        if (Array.isArray(data.toWho)) {
-            for (var _c = 0, _d = data.toWho; _c < _d.length; _c++) {
-                var v_toWho = _d[_c];
-                socketIdtoSocket[v_toWho.socketId].emit("system", data);
-            }
+        socketIdtoSocket[data.toWho.socketId].emit("system", data);
+    }
+});
+function send(data) {
+    if (typeof data.toWho === "undefined") {
+        console.log("发给所有人", data.type);
+        io.emit("system", data);
+        return;
+    }
+    if (Array.isArray(data.toWho)) {
+        for (var _i = 0, _a = data.toWho; _i < _a.length; _i++) {
+            var v_toWho = _a[_i];
+            socketIdtoSocket[v_toWho.socketId].emit("system", data);
         }
-        else {
-            socketIdtoSocket[data.toWho.socketId].emit("system", data);
-        }
+    }
+    else {
+        socketIdtoSocket[data.toWho.socketId].emit("system", data);
     }
 }

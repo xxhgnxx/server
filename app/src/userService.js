@@ -25,23 +25,19 @@ var UserService = (function () {
                 this.socketIdToUser[socket.id] = me;
                 me.isOnline = true;
                 me.socketId = socket.id;
-                var dataout = new data_1.Data();
-                dataout.type = "loginSuccess";
+                var dataout = new data_1.Data("loginSuccess", me);
                 dataout.id = id;
                 dataout.login = true;
                 dataout.socketId = socket.id;
-                dataout.toWho = me;
                 dataout.yourself = me;
                 return dataout;
             }
             else {
                 console.log("密码错误");
-                var dataout = new data_1.Data();
-                dataout.type = "Login_fail";
-                dataout.login = false;
                 var tmpuser = new user_1.User(data.name);
                 tmpuser.socketId = socket.id;
-                dataout.toWho = tmpuser;
+                var dataout = new data_1.Data("Login_fail", tmpuser);
+                dataout.login = false;
                 return dataout;
             }
         }
@@ -55,12 +51,10 @@ var UserService = (function () {
             this.usernameToId[this.socketIdToUser[socket.id].name] = id;
             this.userList.push(this.socketIdToUser[socket.id]);
             // let tmp = this.userSeat(socket.id); // 测试用
-            var dataout = new data_1.Data();
-            dataout.type = "loginSuccess";
+            var dataout = new data_1.Data("loginSuccess", this.socketIdToUser[socket.id]);
             dataout.id = id;
             dataout.login = true;
             dataout.socketId = socket.id;
-            dataout.toWho = this.socketIdToUser[socket.id];
             dataout.yourself = this.socketIdToUser[socket.id];
             return dataout;
         }
@@ -77,23 +71,19 @@ var UserService = (function () {
             this.socketIdToUser[socket.id] = me;
             me.isOnline = true;
             me.socketId = socket.id;
-            var dataout = new data_1.Data();
-            dataout.type = "quickloginSuccess";
+            var dataout = new data_1.Data("quickloginSuccess", me);
             dataout.id = id;
             dataout.login = true;
             dataout.socketId = socket.id;
-            dataout.toWho = me;
             dataout.yourself = me;
             return dataout;
         }
         else {
             console.log("指纹匹配失败");
-            var dataout = new data_1.Data();
-            dataout.type = "quickLogin_fail";
-            dataout.login = false;
             var tmpuser = new user_1.User(data.name);
             tmpuser.socketId = socket.id;
-            dataout.toWho = tmpuser;
+            var dataout = new data_1.Data("quickLogin_fail", tmpuser);
+            dataout.login = false;
             return dataout;
         }
     };
