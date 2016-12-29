@@ -107,7 +107,7 @@ io.on("connection", function (socket) {
                 }
             case "proSelect":
                 {
-                    exports.game.proSelect(data.pro, data.proX3List);
+                    exports.game.findPro(data.proX3List, data.pro);
                     break;
                 }
             case "invPlayer":

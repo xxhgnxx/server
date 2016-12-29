@@ -41,6 +41,8 @@ var data_2 = require("./data");
 var myEmitter_1 = require("./myEmitter");
 var Game = (function () {
     function Game() {
+        this.proX3List = new Array(); // 法案牌摸的三张牌
+        this.proX3ListHide = new Array(); // 法案牌摸的三张牌平民模板
         this.started = false; // 游戏是否开始
         this.playerList = new Array(); // 加入本次游戏的玩家列表，主要用于消息发送
         // 游戏发言
@@ -341,19 +343,6 @@ var Game = (function () {
             console.log("投票记录", this.voteCount + "/" + this.nowVote.length);
         }
     };
-    //  法案选择
-    Game.prototype.proSelect = function (proDiscard, list) {
-        console.log("待选牌堆" + list.length + "张");
-        if (list.length === 3) {
-            list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
-            this.findPro(list);
-        }
-        else {
-            list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
-            console.log("待选牌堆" + list);
-            this.proEff(list[0]); // 法案生效
-        }
-    };
     Game.prototype.veto_all = function () {
         var _this = this;
         // todo 通知玩家
@@ -372,59 +361,137 @@ var Game = (function () {
             });
         }
     };
-    // 选法案，list为空则为总统，list有内容则为总理
-    Game.prototype.findPro = function (list) {
+    // //  法案选择
+    // proSelect1(proDiscard: number, list: Array<number>) {
+    //   console.log("待选牌堆" + list.length + "张");
+    //   if (list.length === 3) {
+    //     list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
+    //     this.findPro(list);
+    //   } else {
+    //     list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
+    //     console.log("待选牌堆" + list);
+    //     this.proEff(list[0]); // 法案生效
+    //   }
+    // }
+    //
+    //
+    // // 选法案，list为空则为总统，list有内容则为总理
+    // findPro1(list?: Array<number>) {
+    //   let body = new Array<any>();
+    //   body[0] = "x";
+    //   body[1] = "x";
+    //   body[2] = "x";
+    //   if (!list) {
+    //     console.log("总统选提案");
+    //     let proTmp = [];
+    //     console.log("牌堆顶位置编号" + this.proIndex);
+    //     if (this.proIndex < 2) {
+    //       console.log("牌堆数量不足");
+    //       this.shuffle();
+    //     }
+    //     // 摸牌
+    //     for (let n = this.proIndex; n >= this.proIndex - 2; n--) {
+    //       proTmp.push(this.proList[n]);
+    //     };
+    //     this.proIndex = this.proIndex - 3; // 摸三张后牌堆顶变换
+    //     this.proX3List = proTmp;
+    //     console.log("摸牌之后牌堆顶位置编号" + this.proIndex);
+    //     console.log("待选法案堆" + proTmp);
+    //     let data = new Data("choosePro");
+    //     data.msg = new Msg("playerCP", "等待总统选提案", "prechoose");
+    //     data.proIndex = this.proIndex;
+    //     myEmitter.emit("Send_Sth", data);
+    //     let data2 = new Data("choosePro", this.pre);
+    //     body[0] = this.proX3List;
+    //     data2.msg = new Msg("playerCP", body, "you_pre");
+    //     data2.proX3List = this.proX3List;
+    //     myEmitter.emit("Send_Sth", data2);
+    //   } else {
+    //     // 通知普通玩家
+    //     this.proX3List = list;
+    //     body[1] = this.proX3List;
+    //     if (this.proEffRed === 5) {
+    //       // todo
+    //       console.log("通知普通玩家总理选提案");
+    //       let data = new Data("choosePro2");
+    //       data.msg = new Msg("system", "总统弃掉了一张卡片，等待总理 " + this.prm.name + " 选提案");
+    //       data.proList = this.proList;
+    //       data.proIndex = this.proIndex;
+    //       myEmitter.emit("Send_Sth", data);
+    //       console.log("总理选提案（否决权）");
+    //       let data2 = new Data("choosePro2", this.prm);
+    //       data2.proX3List = this.proX3List;
+    //       myEmitter.emit("Send_Sth", data2);
+    //     } else {
+    //       console.log("通知普通玩家总理选提案");
+    //       let data = new Data("choosePro");
+    //       data.msg = new Msg("system", "等待总理 " + this.prm.name + " 选提案..");
+    //       data.proList = this.proList;
+    //       data.proIndex = this.proIndex;
+    //       myEmitter.emit("Send_Sth", data);
+    //       console.log("总理选提案(普通)");
+    //       let data2 = new Data("choosePro", this.prm);
+    //       data2.msg = new Msg("playerCP", "等待总统选提案", "you_prm");
+    //       data2.proX3List = this.proX3List;
+    //       myEmitter.emit("Send_Sth", data2);
+    //     }
+    //   }
+    // }
+    //  法案牌过程
+    Game.prototype.findPro = function (list, proDiscard) {
         if (!list) {
-            console.log("总统选提案");
             var proTmp = [];
-            console.log("牌堆顶位置编号" + this.proIndex);
             if (this.proIndex < 2) {
-                console.log("牌堆数量不足");
                 this.shuffle();
             }
-            // 摸牌
             for (var n = this.proIndex; n >= this.proIndex - 2; n--) {
                 proTmp.push(this.proList[n]);
             }
             ;
             this.proIndex = this.proIndex - 3; // 摸三张后牌堆顶变换
-            this.proX3List = proTmp;
-            console.log("摸牌之后牌堆顶位置编号" + this.proIndex);
-            console.log("待选法案堆" + proTmp);
+            this.proX3List[0] = proTmp;
+            this.proX3ListHide[0] = ["x", "x", "x"];
+            // -----pre_CP----
             var data = new data_1.Data("choosePro");
-            data.msg = new data_2.Msg("system", "等待总统选提案");
+            data.msg = new data_2.Msg("playerCP", this.proX3ListHide, "pre_CP", this.proX3List);
             data.proIndex = this.proIndex;
             myEmitter_1.myEmitter.emit("Send_Sth", data);
-            var data2 = new data_1.Data("choosePro", this.pre);
-            data2.proX3List = this.proX3List;
-            myEmitter_1.myEmitter.emit("Send_Sth", data2);
         }
         else {
-            // 通知普通玩家
-            this.proX3List = list;
-            if (this.proEffRed === 5) {
-                console.log("通知普通玩家总理选提案");
-                var data = new data_1.Data("choosePro2");
-                data.msg = new data_2.Msg("system", "总统弃掉了一张卡片，等待总理 " + this.prm.name + " 选提案");
-                data.proList = this.proList;
-                data.proIndex = this.proIndex;
-                myEmitter_1.myEmitter.emit("Send_Sth", data);
-                console.log("总理选提案（否决权）");
-                var data2 = new data_1.Data("choosePro2", this.prm);
-                data2.proX3List = this.proX3List;
-                myEmitter_1.myEmitter.emit("Send_Sth", data2);
+            console.log("列表", list);
+            console.log("弃牌", proDiscard);
+            console.log("弃牌", list.length);
+            if (list[0].length === 3) {
+                // -----prm_CP----
+                list[0].splice(list[0].indexOf(proDiscard), 1); // 从待选牌堆删除该法案
+                list[1] = list[0];
+                list[0] = [proDiscard];
+                this.proX3List = list;
+                this.proX3ListHide[0] = ["x"];
+                this.proX3ListHide[1] = ["x", "x"];
+                if (this.proEffRed < 5) {
+                    // -----无否决权
+                    var data = new data_1.Data("choosePro");
+                    data.msg = new data_2.Msg("playerCP", this.proX3ListHide, "prm_CP", this.proX3List);
+                    myEmitter_1.myEmitter.emit("Send_Sth", data);
+                }
+                else {
+                }
             }
             else {
-                console.log("通知普通玩家总理选提案");
+                //  ------CP_end--------生效过程
+                list[1].splice(list[1].indexOf(proDiscard), 1); // 从待选牌堆删除该法案
+                list[2] = list[1];
+                list[1] = [proDiscard];
+                this.proX3List = list;
+                this.proX3ListHide[1] = ["x"];
+                this.proX3ListHide[2] = ["x"];
                 var data = new data_1.Data("choosePro");
-                data.msg = new data_2.Msg("system", "等待总理 " + this.prm.name + " 选提案..");
-                data.proList = this.proList;
-                data.proIndex = this.proIndex;
+                data.msg = new data_2.Msg("playerCP", this.proX3ListHide, "end_CP", this.proX3List);
                 myEmitter_1.myEmitter.emit("Send_Sth", data);
-                console.log("总理选提案(普通)");
-                var data2 = new data_1.Data("choosePro", this.prm);
-                data2.proX3List = this.proX3List;
-                myEmitter_1.myEmitter.emit("Send_Sth", data2);
+                this.proEff(list[2][0]); // 法案生效
+                this.proX3List = [];
+                this.proX3ListHide = [];
             }
         }
     };

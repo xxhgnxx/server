@@ -78,7 +78,7 @@ io.on("connection", socket => {
         }
       case "proSelect":
         {
-          game.proSelect(data.pro, data.proX3List);
+          game.findPro(data.proX3List, data.pro);
           break;
         }
       case "invPlayer":
@@ -166,7 +166,7 @@ myEmitter.on("speak_start", () => {
   speakAll();
   async function speakAll() {
     await speakPlease(game.pre);
-      myEmitter.emit("Send_Sth", new Data("someone_speak_end"));
+    myEmitter.emit("Send_Sth", new Data("someone_speak_end"));
     if (game.prm.isSurvival) {
       await speakPlease(game.prm);
       myEmitter.emit("Send_Sth", new Data("someone_speak_end"));
