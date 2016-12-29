@@ -242,7 +242,7 @@ var Game = (function () {
         var data = new data_1.Data("selectPrm");
         data.playerList = this.playerList;
         data.pre = this.pre;
-        data.msg = new data_2.Msg("system", "等待总统 " + this.pre.name + " 选总理..");
+        data.msg = new data_2.Msg("choosePlayer", "等待总统 " + this.pre.name + " 选总理..", "selectPrm", true);
         myEmitter_1.myEmitter.emit("Send_Sth", data);
     };
     // 设定总理
@@ -252,13 +252,16 @@ var Game = (function () {
         this.prmTmp.isPrm = true;
         console.log(Date().toString().slice(15, 25), "创建新投票");
         this.setVote();
+        var data0 = new data_1.Data("updata");
+        data0.msg = new data_2.Msg("choosePlayer", "总统选择了 " + this.prmTmp.name, "selectPrm", false, this.prmTmp);
+        myEmitter_1.myEmitter.emit("Send_Sth", data0);
         var data = new data_1.Data("pleaseVote");
         data.playerList = this.playerList;
         data.prmTmp = this.prmTmp;
         data.pre = this.pre;
         data.voteCount = this.voteCount;
         data.nowVote = this.nowVote;
-        data.msg = new data_2.Msg("system", "总统 " + this.pre.name + "  总理 " + this.prmTmp.name + " 请投票..");
+        data.msg = new data_2.Msg("player_vote", "总统 " + this.pre.name + "  总理 " + this.prmTmp.name + " 请投票..", "player_vote", true);
         myEmitter_1.myEmitter.emit("Send_Sth", data);
     };
     // 发起投票
@@ -285,7 +288,7 @@ var Game = (function () {
         this.nowVote[server_1.userService.socketIdToUser[sockeId].seatNo - 1] = res;
         this.voteCount = this.voteCount + 1;
         data.nowVote = this.nowVote;
-        data.msg = new data_2.Msg("system", server_1.userService.socketIdToUser[sockeId].name + "投票了");
+        data.msg = new data_2.Msg("my_vote", server_1.userService.socketIdToUser[sockeId].name + "投票了");
         myEmitter_1.myEmitter.emit("Send_Sth", data);
         if (this.voteCount === this.nowVote.length) {
             // 投票完成
@@ -392,7 +395,6 @@ var Game = (function () {
             data.msg = new data_2.Msg("system", "等待总统选提案");
             data.proIndex = this.proIndex;
             myEmitter_1.myEmitter.emit("Send_Sth", data);
-            console.log(this.pre);
             var data2 = new data_1.Data("choosePro", this.pre);
             data2.proX3List = this.proX3List;
             myEmitter_1.myEmitter.emit("Send_Sth", data2);
@@ -573,7 +575,7 @@ var Game = (function () {
                 console.log("指定总统");
                 tmp = new Array();
                 data = new data_1.Data("preSelect");
-                data.msg = new data_2.Msg("system", "等待总统 " + this.pre.name + " 执行权利：指定下任总统..");
+                data.msg = new data_2.Msg("choosePlayer", "等待总统 " + this.pre.name + " 执行权利：指定下任总统..", "preSelect");
                 myEmitter_1.myEmitter.emit("Send_Sth", data);
                 setTimeout(function () { myEmitter_1.myEmitter.emit("skill_is_done"); }, 0);
                 return [2 /*return*/];
@@ -587,7 +589,7 @@ var Game = (function () {
         if (typeof player === "undefined") {
             // 通知杀人列表
             var data = new data_1.Data("toKill");
-            data.msg = new data_2.Msg("system", "等待总统 " + this.pre.name + " 执行权利：决定枪决的目标");
+            data.msg = new data_2.Msg("choosePlayer", "等待总统 " + this.pre.name + " 执行权利：决定枪决的目标", "toKill");
             myEmitter_1.myEmitter.emit("Send_Sth", data);
         }
         else {

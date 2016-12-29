@@ -239,7 +239,7 @@ export class Game {
     let data = new Data("selectPrm");
     data.playerList = this.playerList;
     data.pre = this.pre;
-    data.msg = new Msg("system", "等待总统 " + this.pre.name + " 选总理..");
+    data.msg = new Msg("choosePlayer", "等待总统 " + this.pre.name + " 选总理..", "selectPrm", true);
     myEmitter.emit("Send_Sth", data);
   }
 
@@ -250,13 +250,16 @@ export class Game {
     this.prmTmp.isPrm = true;
     console.log(Date().toString().slice(15, 25), "创建新投票");
     this.setVote();
+    let data0 = new Data("updata");
+    data0.msg = new Msg("choosePlayer", "总统选择了 " + this.prmTmp.name, "selectPrm", false, this.prmTmp);
+    myEmitter.emit("Send_Sth", data0);
     let data = new Data("pleaseVote");
     data.playerList = this.playerList;
     data.prmTmp = this.prmTmp;
     data.pre = this.pre;
     data.voteCount = this.voteCount;
     data.nowVote = this.nowVote;
-    data.msg = new Msg("system", "总统 " + this.pre.name + "  总理 " + this.prmTmp.name + " 请投票..");
+    data.msg = new Msg("player_vote", "总统 " + this.pre.name + "  总理 " + this.prmTmp.name + " 请投票..", "player_vote", true);
     myEmitter.emit("Send_Sth", data);
   }
 
@@ -287,7 +290,7 @@ export class Game {
     this.nowVote[userService.socketIdToUser[sockeId].seatNo - 1] = res;
     this.voteCount = this.voteCount + 1;
     data.nowVote = this.nowVote;
-    data.msg = new Msg("system", userService.socketIdToUser[sockeId].name+"投票了");
+    data.msg = new Msg("my_vote", userService.socketIdToUser[sockeId].name + "投票了");
     myEmitter.emit("Send_Sth", data);
     if (this.voteCount === this.nowVote.length) {
       // 投票完成
@@ -343,15 +346,15 @@ export class Game {
 
   //  法案选择
   proSelect(proDiscard: number, list: Array<number>) {
-      console.log("待选牌堆" + list.length + "张");
-      if (list.length === 3) {
-          list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
-          this.findPro(list);
-      } else {
-          list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
-          console.log("待选牌堆" + list);
-          this.proEff(list[0]); // 法案生效
-      }
+    console.log("待选牌堆" + list.length + "张");
+    if (list.length === 3) {
+      list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
+      this.findPro(list);
+    } else {
+      list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
+      console.log("待选牌堆" + list);
+      this.proEff(list[0]); // 法案生效
+    }
   }
 
 
@@ -400,7 +403,6 @@ export class Game {
       data.msg = new Msg("system", "等待总统选提案");
       data.proIndex = this.proIndex;
       myEmitter.emit("Send_Sth", data);
-      console.log(this.pre);
       let data2 = new Data("choosePro", this.pre);
       data2.proX3List = this.proX3List;
       myEmitter.emit("Send_Sth", data2);
@@ -576,7 +578,7 @@ export class Game {
     console.log("指定总统");
     let tmp = new Array<Data>();
     let data = new Data("preSelect");
-    data.msg = new Msg("system", "等待总统 " + this.pre.name + " 执行权利：指定下任总统..");
+    data.msg = new Msg("choosePlayer", "等待总统 " + this.pre.name + " 执行权利：指定下任总统..", "preSelect");
     myEmitter.emit("Send_Sth", data);
 
     setTimeout(() => { myEmitter.emit("skill_is_done"); }, 0);
@@ -589,7 +591,7 @@ export class Game {
     if (typeof player === "undefined") {
       // 通知杀人列表
       let data = new Data("toKill");
-      data.msg = new Msg("system", "等待总统 " + this.pre.name + " 执行权利：决定枪决的目标");
+      data.msg = new Msg("choosePlayer", "等待总统 " + this.pre.name + " 执行权利：决定枪决的目标", "toKill");
       myEmitter.emit("Send_Sth", data);
 
     } else {

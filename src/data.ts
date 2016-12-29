@@ -79,7 +79,8 @@ export class MsgData {
 
 export class Msg {
   type: string;
-  constructor(public who: User | string, public body: any, public other?: any) {
+  constructor(public who: any, public body: any,
+    public other?: any, public other1?: any, public other2?: any) {
     if (typeof who === "string") {
       this.type = who;
     } else {
