@@ -105,17 +105,15 @@ io.on("connection", socket => {
         {
           if (typeof data.other === "undefined") {
             let dataOut = new Data("veto_all");
-            dataOut.msg = new Msg("system", "总理向总统提出了否决全部法案的建议，等待总统决定");
+            dataOut.msg = new Msg("playerCP", "总理向总统提出了否决全部法案的建议，等待总统决定", "prm_CP", "veto_all", "pre_CP_veto_all");
             io.emit("system", dataOut);
             break;
           } else {
             if (data.other) {
               console.log("同意否决");
               let dataOut1 = new Data("通知");
-
               dataOut1.other = data.other;
-
-              dataOut1.msg = new Msg("system", "总统同意了总理全部否决的提议，本届政府失效");
+              dataOut1.msg = new Msg("playerCP", "总统同意了总理全部否决的提议，本届政府失效", "prm_CP", "veto_all", "veto_all");
               io.emit("system", dataOut1);
               game.veto_all();
 
@@ -124,7 +122,7 @@ io.on("connection", socket => {
               // todo  通知玩家
               let dataOut = new Data("veto_all");
               dataOut.other = data.other;
-              dataOut.msg = new Msg("system", "总统反对了全部否却的提议，总理仍然要选择一张法案生效");
+              dataOut.msg = new Msg("playerCP", "总统反对了全部否却的提议，总理仍然要选择一张法案生效", "prm_CP", "veto_all", "not_veto_all");
               io.emit("system", dataOut);
             }
 
@@ -161,7 +159,7 @@ myEmitter.on("speak_start", () => {
   // 通知所有玩家 进入发言状态
   console.log("speak_start");
   let data = new Data("speak_start");
-  data.msg = new Msg("system", "玩家顺序发言开始，请切换到“发言界面查看发言”");
+  // data.msg = new Msg("system", "玩家顺序发言开始，请切换到“发言界面查看发言”");
   myEmitter.emit("Send_Sth", data);
   speakAll();
   async function speakAll() {

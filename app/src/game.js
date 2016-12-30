@@ -347,7 +347,7 @@ var Game = (function () {
         var _this = this;
         // todo 通知玩家
         var data = new data_1.Data("veto_all");
-        data.msg = new data_2.Msg("system", "政府已经放弃掉了本次的三次法案，然后宣布本届政府组建失败");
+        data.msg = new data_2.Msg("playerCP", "总统同意了总理全部否决的提议，本届政府失效", "prm_CP", "veto_all", "veto_all");
         this.failTimes = this.failTimes + 1;
         if (this.failTimes === 3) {
             // 强制生效
@@ -449,6 +449,7 @@ var Game = (function () {
             }
             ;
             this.proIndex = this.proIndex - 3; // 摸三张后牌堆顶变换
+            this.proX3List = [];
             this.proX3List[0] = proTmp;
             this.proX3ListHide[0] = ["x", "x", "x"];
             // -----pre_CP----
@@ -460,13 +461,11 @@ var Game = (function () {
         else {
             console.log("列表", list);
             console.log("弃牌", proDiscard);
-            console.log("弃牌", list.length);
             if (list[0].length === 3) {
                 // -----prm_CP----
                 list[0].splice(list[0].indexOf(proDiscard), 1); // 从待选牌堆删除该法案
-                list[1] = list[0];
-                list[0] = [proDiscard];
-                this.proX3List = list;
+                this.proX3List[0] = [proDiscard];
+                this.proX3List[1] = list[0];
                 this.proX3ListHide[0] = ["x"];
                 this.proX3ListHide[1] = ["x", "x"];
                 if (this.proEffRed < 5) {
@@ -476,20 +475,22 @@ var Game = (function () {
                     myEmitter_1.myEmitter.emit("Send_Sth", data);
                 }
                 else {
+                    var data = new data_1.Data("choosePro");
+                    data.msg = new data_2.Msg("playerCP", this.proX3ListHide, "prm_CP", this.proX3List, "prm_CP_veto_all");
+                    myEmitter_1.myEmitter.emit("Send_Sth", data);
                 }
             }
             else {
                 //  ------CP_end--------生效过程
                 list[1].splice(list[1].indexOf(proDiscard), 1); // 从待选牌堆删除该法案
-                list[2] = list[1];
-                list[1] = [proDiscard];
-                this.proX3List = list;
+                this.proX3List[2] = list[1];
+                this.proX3List[1] = [proDiscard];
                 this.proX3ListHide[1] = ["x"];
                 this.proX3ListHide[2] = ["x"];
                 var data = new data_1.Data("choosePro");
                 data.msg = new data_2.Msg("playerCP", this.proX3ListHide, "end_CP", this.proX3List);
                 myEmitter_1.myEmitter.emit("Send_Sth", data);
-                this.proEff(list[2][0]); // 法案生效
+                this.proEff(this.proX3List[2][0]); // 法案生效
                 this.proX3List = [];
                 this.proX3ListHide = [];
             }
@@ -517,12 +518,12 @@ var Game = (function () {
                         console.log(pro);
                         if (pro >= 6) {
                             console.log("红色提案生效");
-                            data.msg = new data_2.Msg("system", "红色提案生效");
+                            // data.msg = new Msg("system", "红色提案生效");
                             this.proEffRed = this.proEffRed + 1;
                         }
                         else {
                             console.log("蓝色提案生效");
-                            data.msg = new data_2.Msg("system", "蓝色提案生效");
+                            // data.msg = new Msg("system", "蓝色提案生效");
                             this.proEffBlue = this.proEffBlue + 1;
                         }
                         data.pro = this.pro;
@@ -706,9 +707,13 @@ var Game = (function () {
         for (var i = 0; i <= 2; i++) {
             data.proX3List.push(this.proList[this.proIndex - i]);
         }
+        data.msg = new data_2.Msg("hgnlookpro", data.proX3List, "isyou");
         myEmitter_1.myEmitter.emit("Send_Sth", data);
         var data2 = new data_1.Data("通知");
-        data2.msg = new data_2.Msg("system", "总统执行了权利：查看了接下来的三张法案牌");
+        data2.toWho = this.playerList.filter(function (t) {
+            return !t.isPre;
+        });
+        data2.msg = new data_2.Msg("hgnlookpro", ["x", "x", "x"], "notyou");
         myEmitter_1.myEmitter.emit("Send_Sth", data2);
         // todo 玩家查看法案时的确认过程
         setTimeout(function () { myEmitter_1.myEmitter.emit("skill_is_done"); }, 2000);
@@ -741,6 +746,8 @@ var Game = (function () {
         this.proEffRed = 0; // 法案生效数
         this.failTimes = 0; // 政府组件失败次数
         this.isVoted = false;
+        this.proX3ListHide = [];
+        this.proX3List = [];
         //  ------------ 数据初始化end
         this.shuffle();
         this.selectGame();

@@ -134,7 +134,7 @@ io.on("connection", function (socket) {
                 {
                     if (typeof data.other === "undefined") {
                         var dataOut = new data_1.Data("veto_all");
-                        dataOut.msg = new data_3.Msg("system", "总理向总统提出了否决全部法案的建议，等待总统决定");
+                        dataOut.msg = new data_3.Msg("playerCP", "总理向总统提出了否决全部法案的建议，等待总统决定", "prm_CP", "veto_all", "pre_CP_veto_all");
                         io.emit("system", dataOut);
                         break;
                     }
@@ -143,7 +143,7 @@ io.on("connection", function (socket) {
                             console.log("同意否决");
                             var dataOut1 = new data_1.Data("通知");
                             dataOut1.other = data.other;
-                            dataOut1.msg = new data_3.Msg("system", "总统同意了总理全部否决的提议，本届政府失效");
+                            dataOut1.msg = new data_3.Msg("playerCP", "总统同意了总理全部否决的提议，本届政府失效", "prm_CP", "veto_all", "veto_all");
                             io.emit("system", dataOut1);
                             exports.game.veto_all();
                         }
@@ -152,7 +152,7 @@ io.on("connection", function (socket) {
                             // todo  通知玩家
                             var dataOut = new data_1.Data("veto_all");
                             dataOut.other = data.other;
-                            dataOut.msg = new data_3.Msg("system", "总统反对了全部否却的提议，总理仍然要选择一张法案生效");
+                            dataOut.msg = new data_3.Msg("playerCP", "总统反对了全部否却的提议，总理仍然要选择一张法案生效", "prm_CP", "veto_all", "not_veto_all");
                             io.emit("system", dataOut);
                         }
                     }
@@ -177,7 +177,7 @@ myEmitter_1.myEmitter.on("speak_start", function () {
     // 通知所有玩家 进入发言状态
     console.log("speak_start");
     var data = new data_1.Data("speak_start");
-    data.msg = new data_3.Msg("system", "玩家顺序发言开始，请切换到“发言界面查看发言”");
+    // data.msg = new Msg("system", "玩家顺序发言开始，请切换到“发言界面查看发言”");
     myEmitter_1.myEmitter.emit("Send_Sth", data);
     speakAll();
     function speakAll() {
