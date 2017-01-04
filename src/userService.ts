@@ -1,7 +1,7 @@
 import { User }  from "./user";
 import { game } from "./server";
 import { Data } from "./data";
-
+import { myEmitter } from "./myEmitter";
 
 
 
@@ -14,13 +14,18 @@ export class UserService {
   usernameToId = new Map<string, string>();
   constructor() { }
 
-  login(socket, data: Data): Data {
+  login(socket, data: Data) {
     let me = this.userList.filter(t => { return t.name === data.name; })[0];
     if (me) {
       console.log("用户已存在");
       if (data.pass === this.NameToPass[data.name]) {
         console.log("密码正确");
         console.log(Date().toString().slice(15, 25), "返回", data.name);
+
+        let datadis = new Data("dis");
+        datadis.toWho = me;
+        myEmitter.emit("Send_Sth", datadis);
+
         this.idToUsername.delete(this.usernameToId[me.name]);
         let id = this.idgen();
         this.idToUsername[id] = me.name;
@@ -33,14 +38,19 @@ export class UserService {
         dataout.login = true;
         dataout.socketId = socket.id;
         dataout.yourself = me;
-        return dataout;
+        dataout.toWho = me;
+        myEmitter.emit("Send_Sth", dataout);
+        let dataout2 = new Data("updata");
+        dataout2.userList = this.userList;
+        myEmitter.emit("Send_Sth", dataout2);
       } else {
         console.log("密码错误");
         let tmpuser = new User(data.name);
         tmpuser.socketId = socket.id;
         let dataout = new Data("Login_fail", tmpuser);
         dataout.login = false;
-        return dataout;
+        dataout.toWho = tmpuser;
+        myEmitter.emit("Send_Sth", dataout);
       }
     } else {
       console.log(Date().toString().slice(15, 25), "用户新加入", data.name);
@@ -57,7 +67,11 @@ export class UserService {
       dataout.login = true;
       dataout.socketId = socket.id;
       dataout.yourself = this.socketIdToUser[socket.id];
-      return dataout;
+      dataout.toWho = this.socketIdToUser[socket.id];
+      myEmitter.emit("Send_Sth", dataout);
+      let dataout2 = new Data("updata");
+      dataout2.userList = this.userList;
+      myEmitter.emit("Send_Sth", dataout2);
     }
   }
 

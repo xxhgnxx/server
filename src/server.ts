@@ -34,10 +34,10 @@ io.on("connection", socket => {
       case "login":
         {
           console.log(Date().toString().slice(15, 25), "try to login", data.name);
-          send(userService.login(socket, data));
-          let dataOut = new Data("updata");
-          dataOut.userList = userService.userList;
-          io.emit("system", dataOut);
+          userService.login(socket, data);
+          // let dataOut = new Data("updata");
+          // dataOut.userList = userService.userList;
+          // io.emit("system", dataOut);
           break;
         }
       case "quickLogin":

@@ -2,6 +2,7 @@
 var user_1 = require("./user");
 var server_1 = require("./server");
 var data_1 = require("./data");
+var myEmitter_1 = require("./myEmitter");
 var UserService = (function () {
     function UserService() {
         this.userList = new Array();
@@ -18,6 +19,9 @@ var UserService = (function () {
             if (data.pass === this.NameToPass[data.name]) {
                 console.log("密码正确");
                 console.log(Date().toString().slice(15, 25), "返回", data.name);
+                var datadis = new data_1.Data("dis");
+                datadis.toWho = me;
+                myEmitter_1.myEmitter.emit("Send_Sth", datadis);
                 this.idToUsername.delete(this.usernameToId[me.name]);
                 var id = this.idgen();
                 this.idToUsername[id] = me.name;
@@ -30,7 +34,11 @@ var UserService = (function () {
                 dataout.login = true;
                 dataout.socketId = socket.id;
                 dataout.yourself = me;
-                return dataout;
+                dataout.toWho = me;
+                myEmitter_1.myEmitter.emit("Send_Sth", dataout);
+                var dataout2 = new data_1.Data("updata");
+                dataout2.userList = this.userList;
+                myEmitter_1.myEmitter.emit("Send_Sth", dataout2);
             }
             else {
                 console.log("密码错误");
@@ -38,7 +46,8 @@ var UserService = (function () {
                 tmpuser.socketId = socket.id;
                 var dataout = new data_1.Data("Login_fail", tmpuser);
                 dataout.login = false;
-                return dataout;
+                dataout.toWho = tmpuser;
+                myEmitter_1.myEmitter.emit("Send_Sth", dataout);
             }
         }
         else {
@@ -56,7 +65,11 @@ var UserService = (function () {
             dataout.login = true;
             dataout.socketId = socket.id;
             dataout.yourself = this.socketIdToUser[socket.id];
-            return dataout;
+            dataout.toWho = this.socketIdToUser[socket.id];
+            myEmitter_1.myEmitter.emit("Send_Sth", dataout);
+            var dataout2 = new data_1.Data("updata");
+            dataout2.userList = this.userList;
+            myEmitter_1.myEmitter.emit("Send_Sth", dataout2);
         }
     };
     UserService.prototype.quickLogin = function (socket, data) {
