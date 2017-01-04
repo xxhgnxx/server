@@ -1,4 +1,3 @@
-import { MsgData } from "./msgData";
 import { User } from "./user";
 export class MsgServices {
     msgListAll = new Array<any>(); // 总发言记录

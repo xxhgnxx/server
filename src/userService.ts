@@ -18,14 +18,19 @@ export class UserService {
     let me = this.userList.filter(t => { return t.name === data.name; })[0];
     if (me) {
       console.log("用户已存在");
+      if (me.isOnline) {
+        let tmpuser = new User(data.name);
+        tmpuser.socketId = socket.id;
+        let dataout = new Data("Login_fail", tmpuser);
+        dataout.login = false;
+        dataout.toWho = tmpuser;
+        dataout.other = "该用户在线";
+        myEmitter.emit("Send_Sth", dataout);
+        return;
+      }
       if (data.pass === this.NameToPass[data.name]) {
         console.log("密码正确");
         console.log(Date().toString().slice(15, 25), "返回", data.name);
-
-        let datadis = new Data("dis");
-        datadis.toWho = me;
-        myEmitter.emit("Send_Sth", datadis);
-
         this.idToUsername.delete(this.usernameToId[me.name]);
         let id = this.idgen();
         this.idToUsername[id] = me.name;
@@ -42,6 +47,7 @@ export class UserService {
         myEmitter.emit("Send_Sth", dataout);
         let dataout2 = new Data("updata");
         dataout2.userList = this.userList;
+        dataout2.playerList = game.playerList;
         myEmitter.emit("Send_Sth", dataout2);
       } else {
         console.log("密码错误");
@@ -50,6 +56,7 @@ export class UserService {
         let dataout = new Data("Login_fail", tmpuser);
         dataout.login = false;
         dataout.toWho = tmpuser;
+        dataout.other = "密码错误";
         myEmitter.emit("Send_Sth", dataout);
       }
     } else {
@@ -120,8 +127,8 @@ export class UserService {
       }
 
       // 测试代码---------------
-      this.socketIdToUser[socketId].isSeat = false;
-      game.playerList.splice(game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+      // this.socketIdToUser[socketId].isSeat = false;
+      // game.playerList.splice(game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
 
       // 测试代码---------------
 
@@ -144,6 +151,12 @@ export class UserService {
       game.playerList.push(this.socketIdToUser[socketId]);
       console.log("坐下了" + this.socketIdToUser[socketId].name);
     }
+
+    let data = new Data("updata");
+    data.playerList = game.playerList;
+    myEmitter.emit("Send_Sth", data);
+
+
   }
 
 

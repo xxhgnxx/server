@@ -16,12 +16,19 @@ var UserService = (function () {
         var me = this.userList.filter(function (t) { return t.name === data.name; })[0];
         if (me) {
             console.log("用户已存在");
+            if (me.isOnline) {
+                var tmpuser = new user_1.User(data.name);
+                tmpuser.socketId = socket.id;
+                var dataout = new data_1.Data("Login_fail", tmpuser);
+                dataout.login = false;
+                dataout.toWho = tmpuser;
+                dataout.other = "该用户在线";
+                myEmitter_1.myEmitter.emit("Send_Sth", dataout);
+                return;
+            }
             if (data.pass === this.NameToPass[data.name]) {
                 console.log("密码正确");
                 console.log(Date().toString().slice(15, 25), "返回", data.name);
-                var datadis = new data_1.Data("dis");
-                datadis.toWho = me;
-                myEmitter_1.myEmitter.emit("Send_Sth", datadis);
                 this.idToUsername.delete(this.usernameToId[me.name]);
                 var id = this.idgen();
                 this.idToUsername[id] = me.name;
@@ -38,6 +45,7 @@ var UserService = (function () {
                 myEmitter_1.myEmitter.emit("Send_Sth", dataout);
                 var dataout2 = new data_1.Data("updata");
                 dataout2.userList = this.userList;
+                dataout2.playerList = server_1.game.playerList;
                 myEmitter_1.myEmitter.emit("Send_Sth", dataout2);
             }
             else {
@@ -47,6 +55,7 @@ var UserService = (function () {
                 var dataout = new data_1.Data("Login_fail", tmpuser);
                 dataout.login = false;
                 dataout.toWho = tmpuser;
+                dataout.other = "密码错误";
                 myEmitter_1.myEmitter.emit("Send_Sth", dataout);
             }
         }
@@ -109,8 +118,8 @@ var UserService = (function () {
                 server_1.game.playerList.splice(server_1.game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
             }
             // 测试代码---------------
-            this.socketIdToUser[socketId].isSeat = false;
-            server_1.game.playerList.splice(server_1.game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+            // this.socketIdToUser[socketId].isSeat = false;
+            // game.playerList.splice(game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
             // 测试代码---------------
             this.socketIdToUser.delete(socketId);
             console.log(Date().toString().slice(15, 25), this.socketIdToUser[socketId].name, "离线");
@@ -132,6 +141,9 @@ var UserService = (function () {
             server_1.game.playerList.push(this.socketIdToUser[socketId]);
             console.log("坐下了" + this.socketIdToUser[socketId].name);
         }
+        var data = new data_1.Data("updata");
+        data.playerList = server_1.game.playerList;
+        myEmitter_1.myEmitter.emit("Send_Sth", data);
     };
     UserService.prototype.joinRoom = function (name) { };
     UserService.prototype.joinGame = function (name) { };
