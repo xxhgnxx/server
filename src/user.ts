@@ -1,39 +1,41 @@
 export class User {
-    socketId: string;
-    isOnline: boolean = true;
-    isSurvival: boolean = true;
-    isSeat: boolean = false;
-    seatNo: number = 0;
-    name: string;
-    isLastPre: boolean = false;
-    isLastPrm: boolean = false;
-    isPre: boolean = false;
-    isPrm: boolean = false;
-    role: string = "x";
-    canBeSelect: boolean = true;
-    constructor(name: string) {
-        this.name = name;
-    }
+  socketId: string;
+  isOnline: boolean = true;
+  isSurvival: boolean = true;
+  isSeat: boolean = false;
+  seatNo: number = 0;
+  name: string;
+  isLastPre: boolean = false;
+  isLastPrm: boolean = false;
+  isPre: boolean = false;
+  isPrm: boolean = false;
+  role: string = "x";
+  canBeSelect: boolean = true;
 
-    userSetNo(n) {
-        this.seatNo = n;
-        console.log(this.name, "坐在了", n, "号座位上");
-    }
+  lastVote: number;  // 最后一次生效的投票情况
+  constructor(name: string) {
+    this.name = name;
+  }
 
-    userSeat() {
-        this.isSeat = !this.isSeat;
-        console.log(this.name, this.isSeat ? "坐下了" : "离开了座位");
-    }
+  userSetNo(n) {
+    this.seatNo = n;
+    console.log(this.name, "坐在了", n, "号座位上");
+  }
 
-    // userOnline() {
-    //     this.isOnline = !this.isOnline;
-    //     console.log(this.name, this.isOnline ? "上线了" : "离线了");
-    // }
+  userSeat() {
+    this.isSeat = !this.isSeat;
+    console.log(this.name, this.isSeat ? "坐下了" : "离开了座位");
+  }
 
-    userSurvival() {
-        this.isSurvival = !this.isSurvival;
-        console.log(this.name, this.isOnline ? "挂了" : "复活了？！");
-    }
+  // userOnline() {
+  //     this.isOnline = !this.isOnline;
+  //     console.log(this.name, this.isOnline ? "上线了" : "离线了");
+  // }
+
+  userSurvival() {
+    this.isSurvival = !this.isSurvival;
+    console.log(this.name, this.isOnline ? "挂了" : "复活了？！");
+  }
 
 
 }

@@ -49,6 +49,7 @@ var Game = (function () {
         this.msgListAll = new Array(); // 总发言记录
         this.msgListNow = new Array(); // 当前发言记录
         this.speakTime = 20; // 发言时间 设定 单位 秒
+        this.lastTurn = new Map(); // 上一次政府情况
     }
     Game.prototype.start = function (socketId) {
         this.playerList = server_1.userService.userList.filter(function (t) {
@@ -299,7 +300,14 @@ var Game = (function () {
             }).length * 2 > this.nowVote.length - this.nowVote.filter(function (t) {
                 return t === 4;
             }).length) {
-                // 成功
+                // 成功data
+                if (this.prm) {
+                    this.prm.isPrm = false;
+                }
+                this.prm = this.prmTmp;
+                this.prm.isPrm = true;
+                data.prm = this.prm;
+                data.playerList = this.playerList;
                 if (this.proEffRed >= 3 && this.prmTmp.role === "Hitler") {
                     //  总理生效 判断希特勒上位
                     console.log("游戏结束");
@@ -308,12 +316,6 @@ var Game = (function () {
                     myEmitter_1.myEmitter.emit("Send_Sth", data);
                 }
                 else {
-                    if (this.prm) {
-                        this.prm.isPrm = false;
-                    }
-                    this.prm = this.prmTmp;
-                    this.prm.isPrm = true;
-                    data.prm = this.prm;
                     data.msg = new data_2.Msg("system", "同意票超过半数，政府成立,等待总统 " + this.pre.name + " 选提案");
                     data.voteRes = 1;
                     myEmitter_1.myEmitter.emit("Send_Sth", data);
