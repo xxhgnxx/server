@@ -1,12 +1,14 @@
 import { User } from "./user";
 
+
+
 export class Data {
   name: string;
   pass: string;
   msg: Msg;
   yourself: User;
   user: User;
-
+  hList: any;
   // 登陆相关
   id: string;
   login: boolean;
@@ -65,17 +67,7 @@ export class Data {
   constructor(public type: string, public toWho?: Array<User> | User) { }
 }
 
-export class MsgData {
-  locked: boolean;  // 禁止发言
-  speakTime: number;  // 发言时间
-  msgFrom: User | string;   // 消息来源  用户 或者 系统(string)
-  msgListAll: Array<any>;  // 完整的消息记录
-  msg: Msg;     // msg内容
-  type: string;
-  constructor(public whoIsSpeaking: User) {
-    this.type = "some_one_speak_sth";
-  }
-}
+
 
 export class Msg {
   type: string;

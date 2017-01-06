@@ -7,14 +7,6 @@ var Data = (function () {
     return Data;
 }());
 exports.Data = Data;
-var MsgData = (function () {
-    function MsgData(whoIsSpeaking) {
-        this.whoIsSpeaking = whoIsSpeaking;
-        this.type = "some_one_speak_sth";
-    }
-    return MsgData;
-}());
-exports.MsgData = MsgData;
 var Msg = (function () {
     function Msg(who, body, other, other1, other2) {
         this.who = who;

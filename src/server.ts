@@ -4,15 +4,15 @@ import { Game } from "./game";
 import { User } from "./user";
 import { VoteSys } from "./vote";
 import { Data } from "./data";
-import { MsgData } from "./data";
+// import { MsgData } from "./data";
 import { Msg } from "./data";
+import { Userlisthgn } from "./userList";
+export let hList: Userlisthgn = new Userlisthgn();
 export let userService = new UserService();
 export let game: Game = new Game();
-
 import { myEmitter } from "./myEmitter";
-
-
 let socketIdtoSocket = new Map();
+let yaml = require("js-yaml");
 
 io.on("connection", socket => {
   console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
@@ -23,8 +23,8 @@ io.on("connection", socket => {
     socketIdtoSocket.delete(socket.id);
     let dataOut = new Data("logout");
     dataOut.other = userService.logout(socket.id);
-    dataOut.userList = userService.userList;
-    io.emit("system", dataOut);
+    dataOut.hList = hList;
+    myEmitter.emit("Send_Sth", dataOut);
   });
 
   socket.on("system", (data: Data) => {
@@ -35,27 +35,18 @@ io.on("connection", socket => {
         {
           console.log(Date().toString().slice(15, 25), "try to login", data.name);
           userService.login(socket, data);
-          // let dataOut = new Data("updata");
-          // dataOut.userList = userService.userList;
-          // io.emit("system", dataOut);
           break;
         }
       case "quickLogin":
         {
           console.log(Date().toString().slice(15, 25), "try to quickLogin", data.id);
-          send(userService.quickLogin(socket, data));
-          let dataOut = new Data("updata");
-          dataOut.userList = userService.userList;
-          io.emit("system", dataOut);
+          userService.quickLogin(socket, data);
           break;
         }
       case "userSeat":
         {
           console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
           userService.userSeat(socket.id);
-          let userSeatdata = new Data("updata");
-          userSeatdata.userList = userService.userList;
-          myEmitter.emit("Send_Sth", userSeatdata);
           break;
         }
       case "gamestart":
@@ -107,14 +98,18 @@ io.on("connection", socket => {
             let dataOut = new Data("veto_all");
             dataOut.msg = new Msg("playerCP", "总理向总统提出了否决全部法案的建议，等待总统决定", "prm_CP", "veto_all", "pre_CP_veto_all");
             io.emit("system", dataOut);
+            game.changestepWho(41);
             break;
           } else {
+
             if (data.other) {
               console.log("同意否决");
               let dataOut1 = new Data("通知");
               dataOut1.other = data.other;
               dataOut1.msg = new Msg("playerCP", "总统同意了总理全部否决的提议，本届政府失效", "prm_CP", "veto_all", "veto_all");
               io.emit("system", dataOut1);
+
+
               game.veto_all();
 
             } else {
@@ -124,6 +119,8 @@ io.on("connection", socket => {
               dataOut.other = data.other;
               dataOut.msg = new Msg("playerCP", "总统反对了全部否却的提议，总理仍然要选择一张法案生效", "prm_CP", "veto_all", "not_veto_all");
               io.emit("system", dataOut);
+              game.changestepWho(51);
+
             }
 
 
@@ -137,10 +134,10 @@ io.on("connection", socket => {
       case "sendMsg":
         {
           console.log(Date().toString().slice(15, 25), socket.id, "发言");
-          let dataOut = new MsgData(userService.socketIdToUser[socket.id]);
-          dataOut.msgFrom = userService.socketIdToUser[socket.id];
-          dataOut.msg = data.msg;
-          io.emit("system", dataOut);
+          // let dataOut = new MsgData(userService.socketIdToUser[socket.id]);
+          // dataOut.msgFrom = userService.socketIdToUser[socket.id];
+          // dataOut.msg = data.msg;
+          // io.emit("system", dataOut);
           break;
         }
 
@@ -169,14 +166,14 @@ myEmitter.on("speak_start", () => {
       await speakPlease(game.prm);
       myEmitter.emit("Send_Sth", new Data("someone_speak_end"));
     }
-    let preNo = game.playerList.indexOf(game.pre);
+    let preNo = hList.playerList.indexOf(game.pre);
     console.log("总统编号", preNo);
-    for (let i = 0; i < game.playerList.length; i++) {
-      if (!game.playerList[preNo].isPre && !game.playerList[preNo].isPrm && game.playerList[preNo].isSurvival) {
-        await speakPlease(game.playerList[preNo]);
+    for (let i = 0; i < hList.playerList.length; i++) {
+      if (!hList.playerList[preNo].isPre && !hList.playerList[preNo].isPrm && hList.playerList[preNo].isSurvival) {
+        await speakPlease(hList.playerList[preNo]);
         myEmitter.emit("Send_Sth", new Data("someone_speak_end"));
       }
-      if (preNo === game.playerList.length - 1) {
+      if (preNo === hList.playerList.length - 1) {
         preNo = 0;
       } else {
         preNo++;
@@ -185,11 +182,11 @@ myEmitter.on("speak_start", () => {
     myEmitter.emit("speak_endAll");
   }
   function speakPlease(who: User) {
-    let msgDataToAll = new MsgData(who);
-    msgDataToAll.type = "newPlayerSpeak";
-    msgDataToAll.speakTime = game.speakTime;
-    msgDataToAll.whoIsSpeaking = who;
-    myEmitter.emit("Send_Sth", msgDataToAll);
+    // let msgDataToAll = new MsgData(who);
+    // msgDataToAll.type = "newPlayerSpeak";
+    // msgDataToAll.speakTime = game.speakTime;
+    // msgDataToAll.whoIsSpeaking = who;
+    // myEmitter.emit("Send_Sth", msgDataToAll);
     console.log("发言消息发送", who.name);
 
     return new Promise(resolve => {
@@ -212,34 +209,51 @@ myEmitter.on("speak_start", () => {
 
 });
 
-
+myEmitter.on("Push_msg", (user: User, msg: Msg) => {
+  let data = new Data("Push_msg");
+  data.msg = msg;
+  socketIdtoSocket[user.socketId].emit("system", data);
+});
+myEmitter.on("Updata_msg", (user: User, msg: Msg) => {
+  let data = new Data("Updata_msg");
+  data.msg = msg;
+  socketIdtoSocket[user.socketId].emit("system", data);
+});
 
 myEmitter.on("Send_Sth", (data) => {
   if (typeof data.toWho === "undefined") {
     console.log("发给所有人", data.type);
-    io.emit("system", data);
-    return;
+    data.toWho = hList.userList;
   }
+
   if (Array.isArray(data.toWho)) {
     for (let v_toWho of data.toWho) {
+      if (typeof data.hList !== "undefined") {
+        hList.yourself = v_toWho;
+        data.hList = yaml.safeDump(hList);
+      }
       socketIdtoSocket[v_toWho.socketId].emit("system", data);
     }
   } else {
+    if (typeof data.hList !== "undefined") {
+      data.hList.yourself = data.toWho;
+      data.hList = yaml.safeDump(data.hList);
+    }
     socketIdtoSocket[data.toWho.socketId].emit("system", data);
   }
 });
-
-function send(data: Data) {
-  if (typeof data.toWho === "undefined") {
-    console.log("发给所有人", data.type);
-    io.emit("system", data);
-    return;
-  }
-  if (Array.isArray(data.toWho)) {
-    for (let v_toWho of data.toWho) {
-      socketIdtoSocket[v_toWho.socketId].emit("system", data);
-    }
-  } else {
-    socketIdtoSocket[data.toWho.socketId].emit("system", data);
-  }
-}
+//
+// function send(data: Data) {
+//   if (typeof data.toWho === "undefined") {
+//     console.log("发给所有人", data.type);
+//     io.emit("system", data);
+//     return;
+//   }
+//   if (Array.isArray(data.toWho)) {
+//     for (let v_toWho of data.toWho) {
+//       socketIdtoSocket[v_toWho.socketId].emit("system", data);
+//     }
+//   } else {
+//     socketIdtoSocket[data.toWho.socketId].emit("system", data);
+//   }
+// }

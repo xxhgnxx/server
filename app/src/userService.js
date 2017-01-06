@@ -2,18 +2,17 @@
 var user_1 = require("./user");
 var server_1 = require("./server");
 var data_1 = require("./data");
+var server_2 = require("./server");
 var myEmitter_1 = require("./myEmitter");
 var UserService = (function () {
     function UserService() {
-        this.userList = new Array();
-        this.gamelist = new Array();
         this.socketIdToUser = new Map();
         this.NameToPass = new Map();
         this.idToUsername = new Map();
         this.usernameToId = new Map();
     }
     UserService.prototype.login = function (socket, data) {
-        var me = this.userList.filter(function (t) { return t.name === data.name; })[0];
+        var me = server_2.hList.userList.filter(function (t) { return t.name === data.name; })[0];
         if (me) {
             console.log("用户已存在");
             if (me.isOnline) {
@@ -42,10 +41,11 @@ var UserService = (function () {
                 dataout.socketId = socket.id;
                 dataout.yourself = me;
                 dataout.toWho = me;
+                dataout.hList = server_2.hList;
                 myEmitter_1.myEmitter.emit("Send_Sth", dataout);
                 var dataout2 = new data_1.Data("updata");
-                dataout2.userList = this.userList;
-                dataout2.playerList = server_1.game.playerList;
+                dataout2.hList = server_2.hList;
+                dataout2.playerList = server_2.hList.playerList;
                 myEmitter_1.myEmitter.emit("Send_Sth", dataout2);
             }
             else {
@@ -67,7 +67,7 @@ var UserService = (function () {
             var id = this.idgen();
             this.idToUsername[id] = this.socketIdToUser[socket.id].name;
             this.usernameToId[this.socketIdToUser[socket.id].name] = id;
-            this.userList.push(this.socketIdToUser[socket.id]);
+            server_2.hList.userList.push(this.socketIdToUser[socket.id]);
             // let tmp = this.userSeat(socket.id); // 测试用
             var dataout = new data_1.Data("loginSuccess", this.socketIdToUser[socket.id]);
             dataout.id = id;
@@ -75,9 +75,15 @@ var UserService = (function () {
             dataout.socketId = socket.id;
             dataout.yourself = this.socketIdToUser[socket.id];
             dataout.toWho = this.socketIdToUser[socket.id];
+            dataout.hList = server_2.hList;
             myEmitter_1.myEmitter.emit("Send_Sth", dataout);
+            // ------test 测试用
+            this.socketIdToUser[socket.id].isSeat = true;
+            server_2.hList.playerList.push(this.socketIdToUser[socket.id]);
+            console.log("坐下了" + this.socketIdToUser[socket.id].name);
+            // ------test 测试用
             var dataout2 = new data_1.Data("updata");
-            dataout2.userList = this.userList;
+            dataout2.hList = server_2.hList;
             myEmitter_1.myEmitter.emit("Send_Sth", dataout2);
         }
     };
@@ -86,7 +92,7 @@ var UserService = (function () {
         // todo  登陆成功后，删除以前的id
         if (this.idToUsername[data.id]) {
             console.log("指纹匹配成功");
-            var me = this.userList.filter(function (t) { return t.name === _this.idToUsername[data.id]; })[0];
+            var me = server_2.hList.userList.filter(function (t) { return t.name === _this.idToUsername[data.id]; })[0];
             this.socketIdToUser.delete(data.id);
             var id = this.idgen();
             this.idToUsername[id] = me.name;
@@ -98,7 +104,11 @@ var UserService = (function () {
             dataout.login = true;
             dataout.socketId = socket.id;
             dataout.yourself = me;
-            return dataout;
+            dataout.hList = server_2.hList;
+            myEmitter_1.myEmitter.emit("Send_Sth", dataout);
+            var dataOut = new data_1.Data("updata");
+            dataOut.hList = server_2.hList;
+            myEmitter_1.myEmitter.emit("Send_Sth", dataOut);
         }
         else {
             console.log("指纹匹配失败");
@@ -106,7 +116,7 @@ var UserService = (function () {
             tmpuser.socketId = socket.id;
             var dataout = new data_1.Data("quickLogin_fail", tmpuser);
             dataout.login = false;
-            return dataout;
+            myEmitter_1.myEmitter.emit("Send_Sth", dataout);
         }
     };
     UserService.prototype.logout = function (socketId) {
@@ -115,11 +125,11 @@ var UserService = (function () {
             if (!server_1.game.started) {
                 console.log("游戏没开始，从playerlist中剔除该用户");
                 this.socketIdToUser[socketId].isSeat = false;
-                server_1.game.playerList.splice(server_1.game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+                server_2.hList.playerList.splice(server_2.hList.playerList.indexOf(this.socketIdToUser[socketId]), 1);
             }
             // 测试代码---------------
             // this.socketIdToUser[socketId].isSeat = false;
-            // game.playerList.splice(game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+            // hList.playerList.splice(hList.playerList.indexOf(this.socketIdToUser[socketId]), 1);
             // 测试代码---------------
             this.socketIdToUser.delete(socketId);
             console.log(Date().toString().slice(15, 25), this.socketIdToUser[socketId].name, "离线");
@@ -133,16 +143,17 @@ var UserService = (function () {
     UserService.prototype.userSeat = function (socketId) {
         if (this.socketIdToUser[socketId].isSeat) {
             this.socketIdToUser[socketId].isSeat = false;
-            server_1.game.playerList.splice(server_1.game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+            server_2.hList.playerList.splice(server_2.hList.playerList.indexOf(this.socketIdToUser[socketId]), 1);
             console.log("站起来" + this.socketIdToUser[socketId].name);
         }
         else {
             this.socketIdToUser[socketId].isSeat = true;
-            server_1.game.playerList.push(this.socketIdToUser[socketId]);
+            server_2.hList.playerList.push(this.socketIdToUser[socketId]);
             console.log("坐下了" + this.socketIdToUser[socketId].name);
         }
         var data = new data_1.Data("updata");
-        data.playerList = server_1.game.playerList;
+        data.playerList = server_2.hList.playerList;
+        data.hList = server_2.hList;
         myEmitter_1.myEmitter.emit("Send_Sth", data);
     };
     UserService.prototype.joinRoom = function (name) { };

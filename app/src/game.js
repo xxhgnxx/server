@@ -35,45 +35,49 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var server_1 = require("./server");
+var server_2 = require("./server");
 var data_1 = require("./data");
-var data_2 = require("./data");
-// import { getdate } from "./userService";
+var hgnmsg_1 = require("./hgnmsg");
+var msg_server_1 = require("./msg_server");
 var myEmitter_1 = require("./myEmitter");
 var Game = (function () {
     function Game() {
         this.proX3List = new Array(); // 法案牌摸的三张牌
         this.proX3ListHide = new Array(); // 法案牌摸的三张牌平民模板
         this.started = false; // 游戏是否开始
-        this.playerList = new Array(); // 加入本次游戏的玩家列表，主要用于消息发送
         // 游戏发言
         this.msgListAll = new Array(); // 总发言记录
         this.msgListNow = new Array(); // 当前发言记录
         this.speakTime = 20; // 发言时间 设定 单位 秒
         this.lastTurn = new Map(); // 上一次政府情况
+        server_2.hList.playerList = server_2.hList.playerList;
     }
     Game.prototype.start = function (socketId) {
-        this.playerList = server_1.userService.userList.filter(function (t) {
+        server_2.hList.playerList = server_2.hList.userList.filter(function (t) {
             return t.isSeat === true;
         });
-        if (this.playerList.length < 5) {
-            console.log("人数不足：", this.playerList.length);
+        if (server_2.hList.playerList.length < 5) {
+            console.log("人数不足：", server_2.hList.playerList.length);
             return false;
         }
         else {
-            console.log("游戏开始", this.playerList.length);
+            console.log("游戏开始", server_2.hList.playerList.length);
             this.gameInit();
             this.setPlayer();
+            this.msgServices = new msg_server_1.MsgServices();
             var dataOut = new data_1.Data("gamestart");
-            dataOut.playerList = this.playerList;
+            dataOut.hList = server_2.hList;
             dataOut.fascistCount = this.fascistCount;
             dataOut.proIndex = this.proIndex;
             dataOut.proList = this.proList;
             dataOut.started = this.started;
             dataOut.speakTime = this.speakTime;
             dataOut.user = server_1.userService.socketIdToUser[socketId];
-            dataOut.msg = new data_2.Msg("system", "游戏开始");
+            // dataOut.msg = new Msg("system", "游戏开始");
             myEmitter_1.myEmitter.emit("Send_Sth", dataOut);
-            this.selectPre(this.playerList[Math.floor(Math.random() * this.playerList.length)]);
+            var gamestartmsg = new hgnmsg_1.Msg("gamestart");
+            this.msgServices.pushAll(gamestartmsg);
+            this.selectPre(server_2.hList.playerList[Math.floor(Math.random() * server_2.hList.playerList.length)]);
         }
     };
     /**
@@ -83,38 +87,38 @@ var Game = (function () {
     Game.prototype.setPlayer = function () {
         console.log("分发玩家身份牌,打乱玩家座位，生成新的顺序");
         var tmp;
-        this.playerList.filter(function (t) { t.seatNo = Math.random(); });
-        this.playerList.sort(function (a, b) { return a.seatNo - b.seatNo; });
-        this.hitler = this.playerList[0];
+        server_2.hList.playerList.filter(function (t) { t.seatNo = Math.random(); });
+        server_2.hList.playerList.sort(function (a, b) { return a.seatNo - b.seatNo; });
+        this.hitler = server_2.hList.playerList[0];
         this.hitler.role = "Hitler";
         var hitData = new data_1.Data("role", this.hitler);
         hitData.role = "Hitler";
-        if (this.playerList.length <= 6) {
+        if (server_2.hList.playerList.length <= 6) {
             hitData.other = this.fascist;
         }
         for (var i = 1; i <= this.fascistCount; i++) {
-            this.fascist.push(this.playerList[i]);
-            this.playerList[i].role = "Fascist";
+            this.fascist.push(server_2.hList.playerList[i]);
+            server_2.hList.playerList[i].role = "Fascist";
         }
         for (var i = 1; i <= this.fascistCount; i++) {
-            tmp = new data_1.Data("role", this.playerList[i]);
+            tmp = new data_1.Data("role", server_2.hList.playerList[i]);
             tmp.role = "Fascist";
             tmp.other = this.fascist;
             tmp.target = this.hitler;
             myEmitter_1.myEmitter.emit("Send_Sth", tmp);
         }
         myEmitter_1.myEmitter.emit("Send_Sth", hitData);
-        for (var i = this.fascistCount + 1; i < this.playerList.length; i++) {
-            this.liberal.push(this.playerList[i]);
-            this.playerList[i].role = "Liberal";
-            tmp = new data_1.Data("role", this.playerList[i]);
+        for (var i = this.fascistCount + 1; i < server_2.hList.playerList.length; i++) {
+            this.liberal.push(server_2.hList.playerList[i]);
+            server_2.hList.playerList[i].role = "Liberal";
+            tmp = new data_1.Data("role", server_2.hList.playerList[i]);
             tmp.role = "Liberal";
             myEmitter_1.myEmitter.emit("Send_Sth", tmp);
         }
-        this.playerList.filter(function (t) { t.seatNo = Math.random(); });
-        this.playerList.sort(function (a, b) { return a.seatNo - b.seatNo; });
-        for (var i = 0; i < this.playerList.length; i++) {
-            this.playerList[i].seatNo = i + 1;
+        server_2.hList.playerList.filter(function (t) { t.seatNo = Math.random(); });
+        server_2.hList.playerList.sort(function (a, b) { return a.seatNo - b.seatNo; });
+        for (var i = 0; i < server_2.hList.playerList.length; i++) {
+            server_2.hList.playerList[i].seatNo = i + 1;
         }
     };
     Game.prototype.makePro = function () {
@@ -131,7 +135,7 @@ var Game = (function () {
      */
     Game.prototype.selectGame = function () {
         console.log("根据人数选择本局游戏规则");
-        var plyaerCount = this.playerList.length;
+        var plyaerCount = server_2.hList.playerList.length;
         if (plyaerCount >= 9) {
             console.log("选择9-10人游戏");
             this.fascistCount = 3;
@@ -185,7 +189,7 @@ var Game = (function () {
         });
         console.log(this.proList);
         var data = new data_1.Data("shuffle");
-        data.msg = new data_2.Msg("system", "法案牌堆和弃牌堆重新洗混了");
+        // data.msg = new Msg("system", "法案牌堆和弃牌堆重新洗混了");
         myEmitter_1.myEmitter.emit("Send_Sth", data);
     };
     /**
@@ -196,7 +200,7 @@ var Game = (function () {
         if (this.prm) {
             this.prm.isPrm = false;
         }
-        this.playerList.filter(function (t) { t.isPre = false; });
+        server_2.hList.playerList.filter(function (t) { t.isPre = false; });
         if (this.pre) {
             this.pre.isPre = false;
         }
@@ -204,11 +208,11 @@ var Game = (function () {
         this.pre.isPre = true;
         if (!next) {
             // 顺序指定下届总统
-            if (this.playerList[this.playerList.indexOf(player) + 1]) {
-                this.prenext = this.playerList[this.playerList.indexOf(player) + 1];
+            if (server_2.hList.playerList[server_2.hList.playerList.indexOf(player) + 1]) {
+                this.prenext = server_2.hList.playerList[server_2.hList.playerList.indexOf(player) + 1];
             }
             else {
-                this.prenext = this.playerList[0];
+                this.prenext = server_2.hList.playerList[0];
             }
             ;
         }
@@ -216,13 +220,13 @@ var Game = (function () {
         console.log("本届总统是", this.pre.name);
         // console.log("下届总统是", this.prenext.name);
         // 处理是否可选问题
-        var playerSurvival = this.playerList.filter(function (t) {
+        var playerSurvival = server_2.hList.playerList.filter(function (t) {
             return t.isSurvival;
         }).length;
         // console.log("当前存活人数", playerSurvival);
         if (playerSurvival > 5) {
             // console.log("人数大于5");
-            this.playerList.filter(function (t) {
+            server_2.hList.playerList.filter(function (t) {
                 if (t.isLastPrm || t.isLastPre) {
                     t.canBeSelect = false;
                 }
@@ -233,7 +237,7 @@ var Game = (function () {
         }
         else {
             // console.log("人数小于等于5");
-            this.playerList.filter(function (t) {
+            server_2.hList.playerList.filter(function (t) {
                 if (t.isLastPrm) {
                     t.canBeSelect = false;
                 }
@@ -243,10 +247,14 @@ var Game = (function () {
             });
         }
         var data = new data_1.Data("selectPrm");
-        data.playerList = this.playerList;
+        data.hList = server_2.hList;
         data.pre = this.pre;
-        data.msg = new data_2.Msg("choosePlayer", "等待总统 " + this.pre.name + " 选总理..", "selectPrm", true);
+        // data.msg = new Msg("choosePlayer", "等待总统 " + this.pre.name + " 选总理..", "selectPrm", true);
         myEmitter_1.myEmitter.emit("Send_Sth", data);
+        var msg = new hgnmsg_1.Msg("selectPrm");
+        msg.msg = "等待总统选择总理";
+        msg.userList = server_2.hList.playerList;
+        this.msgServices.pushAll(msg);
     };
     // 设定总理
     Game.prototype.setPrm = function (user) {
@@ -256,27 +264,28 @@ var Game = (function () {
         console.log(Date().toString().slice(15, 25), "创建新投票");
         this.setVote();
         var data0 = new data_1.Data("updata");
-        data0.msg = new data_2.Msg("choosePlayer", "总统选择了 " + this.prmTmp.name, "selectPrm", false, this.prmTmp);
+        // data0.msg = new Msg("choosePlayer", "总统选择了 " + this.prmTmp.name, "selectPrm", false, this.prmTmp);
         myEmitter_1.myEmitter.emit("Send_Sth", data0);
         var data = new data_1.Data("pleaseVote");
-        data.playerList = this.playerList;
-        data.prmTmp = this.prmTmp;
-        data.pre = this.pre;
-        data.voteCount = this.voteCount;
-        data.nowVote = this.nowVote;
-        data.msg = new data_2.Msg("player_vote", "总统 " + this.pre.name + "  总理 " + this.prmTmp.name + " 请投票..", "player_vote", true);
+        data.hList = server_2.hList;
+        // data.msg = new Msg("player_vote", "总统 " + this.pre.name + "  总理 " + this.prmTmp.name + " 请投票..", "player_vote", true);
         myEmitter_1.myEmitter.emit("Send_Sth", data);
+        var msgvotestart = new hgnmsg_1.Msg("vote_please");
+        msgvotestart.userList = server_2.hList.playerList;
+        msgvotestart.voteCount = this.voteCount;
+        msgvotestart.nowVote = this.nowVote;
+        this.msgServices.updataAll(msgvotestart);
     };
     // 发起投票
     Game.prototype.setVote = function () {
         var tmp = new Array();
         this.voteCount = 0;
-        for (var i = 0; i < this.playerList.length; i++) {
-            if (this.playerList[i].isSurvival) {
-                tmp[this.playerList[i].seatNo - 1] = 0;
+        for (var i = 0; i < server_2.hList.playerList.length; i++) {
+            if (server_2.hList.playerList[i].isSurvival) {
+                tmp[server_2.hList.playerList[i].seatNo - 1] = 0;
             }
             else {
-                tmp[this.playerList[i].seatNo - 1] = 4;
+                tmp[server_2.hList.playerList[i].seatNo - 1] = 4;
                 this.voteCount = this.voteCount + 1;
             }
         }
@@ -287,14 +296,19 @@ var Game = (function () {
     };
     // 结算投票
     Game.prototype.getVote = function (sockeId, res) {
-        var data = new data_1.Data("pleaseVote");
         this.nowVote[server_1.userService.socketIdToUser[sockeId].seatNo - 1] = res;
         this.voteCount = this.voteCount + 1;
-        data.nowVote = this.nowVote;
-        data.msg = new data_2.Msg("my_vote", server_1.userService.socketIdToUser[sockeId].name + "投票了");
-        myEmitter_1.myEmitter.emit("Send_Sth", data);
+        console.log("投票记录", this.voteCount + "/" + this.nowVote.length);
+        // data.nowVote = this.nowVote;
+        // myEmitter.emit("Send_Sth", data);
+        var msgvote = new hgnmsg_1.Msg("vote_please");
+        msgvote.userList = server_2.hList.playerList;
+        msgvote.voteCount = this.voteCount;
+        msgvote.nowVote = this.nowVote;
+        this.msgServices.updataAll(msgvote);
         if (this.voteCount === this.nowVote.length) {
             // 投票完成
+            var data = new data_1.Data("updata");
             if (this.nowVote.filter(function (t) {
                 return t === 2;
             }).length * 2 > this.nowVote.length - this.nowVote.filter(function (t) {
@@ -307,17 +321,18 @@ var Game = (function () {
                 this.prm = this.prmTmp;
                 this.prm.isPrm = true;
                 data.prm = this.prm;
-                data.playerList = this.playerList;
+                data.hList = server_2.hList;
                 if (this.proEffRed >= 3 && this.prmTmp.role === "Hitler") {
                     //  总理生效 判断希特勒上位
                     console.log("游戏结束");
                     this.gameover("游戏结束，红色胜利");
-                    data.msg = new data_2.Msg("system", "同意票超过半数，政府成立,希特勒在危机时刻上任总理，游戏结束，红色胜利");
+                    // todo
+                    // data.msg = new Msg("system", "同意票超过半数，政府成立,希特勒在危机时刻上任总理，游戏结束，红色胜利");
                     myEmitter_1.myEmitter.emit("Send_Sth", data);
                 }
                 else {
-                    data.msg = new data_2.Msg("system", "同意票超过半数，政府成立,等待总统 " + this.pre.name + " 选提案");
-                    data.voteRes = 1;
+                    // data.msg = new Msg("system", "同意票超过半数，政府成立,等待总统 " + this.pre.name + " 选提案");
+                    // data.voteRes = 1;
                     myEmitter_1.myEmitter.emit("Send_Sth", data);
                     this.findPro();
                 }
@@ -329,12 +344,12 @@ var Game = (function () {
                 this.failTimes = this.failTimes + 1;
                 if (this.failTimes === 3) {
                     // 强制生效
-                    data.msg = new data_2.Msg("system", "同意票未超过半数，政府组建失败，连续三次组建政府失败，法案强制生效一张");
+                    // data.msg = new Msg("system", "同意票未超过半数，政府组建失败，连续三次组建政府失败，法案强制生效一张");
                     myEmitter_1.myEmitter.emit("Send_Sth", data);
                     this.proEff(this.proList[this.proIndex], true);
                 }
                 else {
-                    data.msg = new data_2.Msg("system", "同意票未超过半数，政府组建失败，切换下任总统候选");
+                    // data.msg = new Msg("system", "同意票未超过半数，政府组建失败，切换下任总统候选");
                     myEmitter_1.myEmitter.emit("Send_Sth", data);
                     // say 不发言直接下一届政府
                     this.selectPre(this.prenext);
@@ -342,14 +357,14 @@ var Game = (function () {
             }
         }
         else {
-            console.log("投票记录", this.voteCount + "/" + this.nowVote.length);
         }
     };
     Game.prototype.veto_all = function () {
         var _this = this;
         // todo 通知玩家
+        this.changestepWho(40);
         var data = new data_1.Data("veto_all");
-        data.msg = new data_2.Msg("playerCP", "总统同意了总理全部否决的提议，本届政府失效", "prm_CP", "veto_all", "veto_all");
+        // data.msg = new Msg("playerCP", "总统同意了总理全部否决的提议，本届政府失效", "prm_CP", "veto_all", "veto_all");
         this.failTimes = this.failTimes + 1;
         if (this.failTimes === 3) {
             // 强制生效
@@ -456,9 +471,19 @@ var Game = (function () {
             this.proX3ListHide[0] = ["x", "x", "x"];
             // -----pre_CP----
             var data = new data_1.Data("choosePro");
-            data.msg = new data_2.Msg("playerCP", this.proX3ListHide, "pre_CP", this.proX3List);
+            // data.msg = new Msg("playerCP", this.proX3ListHide, "pre_CP", this.proX3List);
             data.proIndex = this.proIndex;
             myEmitter_1.myEmitter.emit("Send_Sth", data);
+            var chooseProMsg1 = new hgnmsg_1.Msg("choosePro");
+            chooseProMsg1.step = 1;
+            chooseProMsg1.proX3List = [];
+            chooseProMsg1.proX3List[0] = ["x", "x", "x"];
+            this.msgServices.pushAll(chooseProMsg1);
+            chooseProMsg1 = new hgnmsg_1.Msg("choosePro");
+            chooseProMsg1.step = 1;
+            chooseProMsg1.proX3List = [];
+            chooseProMsg1.proX3List[0] = proTmp;
+            this.msgServices.updataWho(this.pre, chooseProMsg1);
         }
         else {
             console.log("列表", list);
@@ -470,16 +495,58 @@ var Game = (function () {
                 this.proX3List[1] = list[0];
                 this.proX3ListHide[0] = ["x"];
                 this.proX3ListHide[1] = ["x", "x"];
-                if (this.proEffRed < 5) {
+                if (this.proEffRed < 0) {
                     // -----无否决权
                     var data = new data_1.Data("choosePro");
-                    data.msg = new data_2.Msg("playerCP", this.proX3ListHide, "prm_CP", this.proX3List);
+                    // data.msg = new Msg("playerCP", this.proX3ListHide, "prm_CP", this.proX3List);
                     myEmitter_1.myEmitter.emit("Send_Sth", data);
+                    var chooseProMsg2 = new hgnmsg_1.Msg("choosePro");
+                    chooseProMsg2.step = 2;
+                    chooseProMsg2.proX3List = [];
+                    chooseProMsg2.proX3List[0] = ["x"];
+                    chooseProMsg2.proX3List[1] = ["x", "x"];
+                    for (var i = 0; i < server_2.hList.playerList.length; i++) {
+                        if (!server_2.hList.playerList[i].isPre && !server_2.hList.playerList[i].isPrm) {
+                            this.msgServices.updataWho(server_2.hList.playerList[i], chooseProMsg2);
+                        }
+                    }
+                    chooseProMsg2 = new hgnmsg_1.Msg("choosePro");
+                    chooseProMsg2.step = 2;
+                    chooseProMsg2.proX3List = [];
+                    chooseProMsg2.proX3List[0] = ["x"];
+                    chooseProMsg2.proX3List[1] = list[0];
+                    this.msgServices.updataWho(this.prm, chooseProMsg2);
+                    chooseProMsg2 = new hgnmsg_1.Msg("choosePro");
+                    chooseProMsg2.step = 2;
+                    chooseProMsg2.proX3List = [];
+                    chooseProMsg2.proX3List[1] = list[0];
+                    chooseProMsg2.proX3List[0] = [proDiscard];
+                    this.msgServices.updataWho(this.pre, chooseProMsg2);
                 }
                 else {
-                    var data = new data_1.Data("choosePro");
-                    data.msg = new data_2.Msg("playerCP", this.proX3ListHide, "prm_CP", this.proX3List, "prm_CP_veto_all");
-                    myEmitter_1.myEmitter.emit("Send_Sth", data);
+                    // ------有否决权
+                    var chooseProMsg2 = new hgnmsg_1.Msg("choosePro");
+                    chooseProMsg2.step = 3;
+                    chooseProMsg2.proX3List = [];
+                    chooseProMsg2.proX3List[0] = ["x"];
+                    chooseProMsg2.proX3List[1] = ["x", "x"];
+                    for (var i = 0; i < server_2.hList.playerList.length; i++) {
+                        if (!server_2.hList.playerList[i].isPre && !server_2.hList.playerList[i].isPrm) {
+                            this.msgServices.updataWho(server_2.hList.playerList[i], chooseProMsg2);
+                        }
+                    }
+                    chooseProMsg2 = new hgnmsg_1.Msg("choosePro");
+                    chooseProMsg2.proX3List = [];
+                    chooseProMsg2.proX3List[0] = ["x"];
+                    chooseProMsg2.step = 31;
+                    chooseProMsg2.proX3List[1] = list[0];
+                    this.msgServices.updataWho(this.prm, chooseProMsg2);
+                    chooseProMsg2 = new hgnmsg_1.Msg("choosePro");
+                    chooseProMsg2.step = 3;
+                    chooseProMsg2.proX3List = [];
+                    chooseProMsg2.proX3List[1] = list[0];
+                    chooseProMsg2.proX3List[0] = [proDiscard];
+                    this.msgServices.updataWho(this.pre, chooseProMsg2);
                 }
             }
             else {
@@ -490,8 +557,33 @@ var Game = (function () {
                 this.proX3ListHide[1] = ["x"];
                 this.proX3ListHide[2] = ["x"];
                 var data = new data_1.Data("choosePro");
-                data.msg = new data_2.Msg("playerCP", this.proX3ListHide, "end_CP", this.proX3List);
+                // data.msg = new Msg("playerCP", this.proX3ListHide, "end_CP", this.proX3List);
                 myEmitter_1.myEmitter.emit("Send_Sth", data);
+                var chooseProMsg3 = new hgnmsg_1.Msg("choosePro");
+                chooseProMsg3.step = 0;
+                chooseProMsg3.proX3List = [];
+                chooseProMsg3.proX3List[0] = ["x"];
+                chooseProMsg3.proX3List[1] = ["x"];
+                chooseProMsg3.proX3List[2] = list[1];
+                for (var i = 0; i < server_2.hList.playerList.length; i++) {
+                    if (!server_2.hList.playerList[i].isPre && !server_2.hList.playerList[i].isPrm) {
+                        this.msgServices.updataWho(server_2.hList.playerList[i], chooseProMsg3);
+                    }
+                }
+                chooseProMsg3 = new hgnmsg_1.Msg("choosePro");
+                chooseProMsg3.step = 0;
+                chooseProMsg3.proX3List = [];
+                chooseProMsg3.proX3List[0] = ["x"];
+                chooseProMsg3.proX3List[2] = list[1];
+                chooseProMsg3.proX3List[1] = [proDiscard];
+                this.msgServices.updataWho(this.prm, chooseProMsg3);
+                chooseProMsg3 = new hgnmsg_1.Msg("choosePro");
+                chooseProMsg3.step = 0;
+                chooseProMsg3.proX3List = [];
+                chooseProMsg3.proX3List[2] = list[1];
+                chooseProMsg3.proX3List[1] = [proDiscard];
+                chooseProMsg3.proX3List[0] = this.msgServices.allPlayerMsgList[this.pre.seatNo - 1][this.msgServices.allPlayerMsgList[this.pre.seatNo - 1].length - 1].proX3List[0];
+                this.msgServices.updataWho(this.pre, chooseProMsg3);
                 this.proEff(this.proX3List[2][0]); // 法案生效
                 this.proX3List = [];
                 this.proX3ListHide = [];
@@ -539,7 +631,7 @@ var Game = (function () {
                         console.log("红方胜利");
                         //   todo:结算
                         console.log("游戏结束");
-                        data2.msg = new data_2.Msg("system", "6张红色法案生效，法西斯阵营胜利");
+                        // data2.msg = new Msg("system", "6张红色法案生效，法西斯阵营胜利");
                         myEmitter_1.myEmitter.emit("Send_Sth", data2);
                         this.gameover("游戏结束，红色胜利");
                         return [3 /*break*/, 5];
@@ -551,14 +643,14 @@ var Game = (function () {
                         //   todo:结算
                         console.log("游戏结束");
                         this.gameover("游戏结束，蓝色胜利");
-                        data2.msg = new data_2.Msg("system", "5张蓝色法案生效，自由党阵营胜利");
+                        // data2.msg = new Msg("system", "5张蓝色法案生效，自由党阵营胜利");
                         myEmitter_1.myEmitter.emit("Send_Sth", data2);
                         return [3 /*break*/, 5];
                     case 2:
                         this.proList.splice(this.proList.indexOf(pro), 1); // 从总牌堆删除生效法案
-                        for (n in this.playerList) {
-                            this.playerList[n].isLastPre = false;
-                            this.playerList[n].isLastPrm = false;
+                        for (n in server_2.hList.playerList) {
+                            server_2.hList.playerList[n].isLastPre = false;
+                            server_2.hList.playerList[n].isLastPrm = false;
                         } // 上届政府标记归零
                         if (!force) {
                             // 普通生效，变更政府标记
@@ -587,7 +679,7 @@ var Game = (function () {
                         myEmitter_1.myEmitter.emit("speak_start");
                         myEmitter_1.myEmitter.once("speak_endAll", function () {
                             var msgDataToAll = new data_1.Data("speak_endAll");
-                            msgDataToAll.msg = new data_2.Msg("system", "玩家顺序发言结束");
+                            // msgDataToAll.msg = new Msg("system", "玩家顺序发言结束");
                             myEmitter_1.myEmitter.emit("Send_Sth", msgDataToAll);
                             _this.selectPre(_this.prenext); // 切换总统 继续游戏
                         });
@@ -611,7 +703,7 @@ var Game = (function () {
                 if (typeof player === "undefined") {
                     console.log("通知总统 调查身份");
                     data = new data_1.Data("invPlayer");
-                    data.msg = new data_2.Msg("system", "等待总统调查身份");
+                    // data.msg = new Msg("system", "等待总统调查身份");
                     myEmitter_1.myEmitter.emit("Send_Sth", data);
                 }
                 else {
@@ -628,7 +720,7 @@ var Game = (function () {
                     data2.target = player;
                     myEmitter_1.myEmitter.emit("Send_Sth", data2);
                     data3 = new data_1.Data("通知");
-                    data3.msg = new data_2.Msg("system", "总统成功调查了 " + player.name + " 的身份");
+                    // data3.msg = new Msg("system", "总统成功调查了 " + player.name + " 的身份");
                     myEmitter_1.myEmitter.emit("Send_Sth", data3);
                     // todo 玩家确认过程
                     setTimeout(function () { myEmitter_1.myEmitter.emit("skill_is_done"); }, 0);
@@ -645,7 +737,7 @@ var Game = (function () {
                 console.log("指定总统");
                 tmp = new Array();
                 data = new data_1.Data("preSelect");
-                data.msg = new data_2.Msg("choosePlayer", "等待总统 " + this.pre.name + " 执行权利：指定下任总统..", "preSelect");
+                // data.msg = new Msg("choosePlayer", "等待总统 " + this.pre.name + " 执行权利：指定下任总统..", "preSelect");
                 myEmitter_1.myEmitter.emit("Send_Sth", data);
                 setTimeout(function () { myEmitter_1.myEmitter.emit("skill_is_done"); }, 0);
                 return [2 /*return*/];
@@ -659,7 +751,7 @@ var Game = (function () {
         if (typeof player === "undefined") {
             // 通知杀人列表
             var data = new data_1.Data("toKill");
-            data.msg = new data_2.Msg("choosePlayer", "等待总统 " + this.pre.name + " 执行权利：决定枪决的目标", "toKill");
+            // data.msg = new Msg("choosePlayer", "等待总统 " + this.pre.name + " 执行权利：决定枪决的目标", "toKill");
             myEmitter_1.myEmitter.emit("Send_Sth", data);
         }
         else {
@@ -669,26 +761,26 @@ var Game = (function () {
             player.isSurvival = false;
             var data = new data_1.Data("toKill");
             data.target = player;
-            data.playerList = this.playerList;
-            data.msg = new data_2.Msg("system", "总统枪决了 " + player.name);
+            data.hList = server_2.hList;
+            // data.msg = new Msg("system", "总统枪决了 " + player.name);
             myEmitter_1.myEmitter.emit("Send_Sth", data);
             player = server_1.userService.socketIdToUser[player.socketId];
             if (player.role === "Hitler") {
                 console.log("游戏结束");
-                data.msg = new data_2.Msg("system", "总统枪决的人是希特勒 游戏结束，自由党胜利");
+                // data.msg = new Msg("system", "总统枪决的人是希特勒 游戏结束，自由党胜利");
                 this.gameover("游戏结束，蓝色胜利");
             }
             else {
                 // 枪毙的是下届总统时，切换下届总统
                 if (this.prenext.socketId === player.socketId) {
                     console.log("被枪决的玩家是下届总统");
-                    if (this.playerList[this.playerList.indexOf(player) + 1]) {
+                    if (server_2.hList.playerList[server_2.hList.playerList.indexOf(player) + 1]) {
                         console.log("被枪决的玩家不是队列末位");
-                        this.prenext = this.playerList[this.playerList.indexOf(player) + 1];
+                        this.prenext = server_2.hList.playerList[server_2.hList.playerList.indexOf(player) + 1];
                     }
                     else {
                         console.log("被枪决的玩家是队列末位");
-                        this.prenext = this.playerList[0];
+                        this.prenext = server_2.hList.playerList[0];
                         console.log(this.prenext);
                     }
                     ;
@@ -709,13 +801,13 @@ var Game = (function () {
         for (var i = 0; i <= 2; i++) {
             data.proX3List.push(this.proList[this.proIndex - i]);
         }
-        data.msg = new data_2.Msg("hgnlookpro", data.proX3List, "isyou");
+        // data.msg = new Msg("hgnlookpro", data.proX3List, "isyou");
         myEmitter_1.myEmitter.emit("Send_Sth", data);
         var data2 = new data_1.Data("通知");
-        data2.toWho = this.playerList.filter(function (t) {
+        data2.toWho = server_2.hList.playerList.filter(function (t) {
             return !t.isPre;
         });
-        data2.msg = new data_2.Msg("hgnlookpro", ["x", "x", "x"], "notyou");
+        // data2.msg = new Msg("hgnlookpro", ["x", "x", "x"], "notyou");
         myEmitter_1.myEmitter.emit("Send_Sth", data2);
         // todo 玩家查看法案时的确认过程
         setTimeout(function () { myEmitter_1.myEmitter.emit("skill_is_done"); }, 2000);
@@ -753,6 +845,26 @@ var Game = (function () {
         //  ------------ 数据初始化end
         this.shuffle();
         this.selectGame();
+    };
+    Game.prototype.changestepWho = function (n) {
+        switch (n) {
+            case 41: {
+                this.msgServices.changestepWho(this.pre, 41);
+                this.msgServices.changestepAll(4, this.pre);
+                break;
+            }
+            case 51: {
+                this.msgServices.changestepWho(this.prm, 51);
+                this.msgServices.changestepAll(5, this.prm);
+                break;
+            }
+            case 40: {
+                this.msgServices.changestepAll(40);
+                break;
+            }
+            default:
+                console.log("bug!!!!!bug!!!!!bug!!!!!bug!!!!!bug!!!!!bug!!!!!bug!!!!!bug!!!!!");
+        }
     };
     return Game;
 }());

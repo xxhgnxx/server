@@ -1,21 +1,22 @@
 import { User }  from "./user";
 import { game } from "./server";
 import { Data } from "./data";
+import { hList } from "./server";
+
+import { Userlisthgn } from "./userList";
 import { myEmitter } from "./myEmitter";
 
-
-
 export class UserService {
-  userList = new Array<User>();
-  gamelist = new Array<User>();
   socketIdToUser = new Map<string, User>();
   NameToPass = new Map<string, string>();
   idToUsername = new Map<string, string>();
   usernameToId = new Map<string, string>();
-  constructor() { }
+  constructor() {
+
+  }
 
   login(socket, data: Data) {
-    let me = this.userList.filter(t => { return t.name === data.name; })[0];
+    let me = hList.userList.filter(t => { return t.name === data.name; })[0];
     if (me) {
       console.log("用户已存在");
       if (me.isOnline) {
@@ -44,10 +45,11 @@ export class UserService {
         dataout.socketId = socket.id;
         dataout.yourself = me;
         dataout.toWho = me;
+        dataout.hList = hList;
         myEmitter.emit("Send_Sth", dataout);
         let dataout2 = new Data("updata");
-        dataout2.userList = this.userList;
-        dataout2.playerList = game.playerList;
+        dataout2.hList = hList;
+        dataout2.playerList = hList.playerList;
         myEmitter.emit("Send_Sth", dataout2);
       } else {
         console.log("密码错误");
@@ -67,7 +69,7 @@ export class UserService {
       let id = this.idgen();
       this.idToUsername[id] = this.socketIdToUser[socket.id].name;
       this.usernameToId[this.socketIdToUser[socket.id].name] = id;
-      this.userList.push(this.socketIdToUser[socket.id]);
+      hList.userList.push(this.socketIdToUser[socket.id]);
       // let tmp = this.userSeat(socket.id); // 测试用
       let dataout = new Data("loginSuccess", this.socketIdToUser[socket.id]);
       dataout.id = id;
@@ -75,41 +77,47 @@ export class UserService {
       dataout.socketId = socket.id;
       dataout.yourself = this.socketIdToUser[socket.id];
       dataout.toWho = this.socketIdToUser[socket.id];
+      dataout.hList = hList;
       myEmitter.emit("Send_Sth", dataout);
+      // ------test 测试用
+      this.socketIdToUser[socket.id].isSeat = true;
+      hList.playerList.push(this.socketIdToUser[socket.id]);
+      console.log("坐下了" + this.socketIdToUser[socket.id].name);
+      // ------test 测试用
       let dataout2 = new Data("updata");
-      dataout2.userList = this.userList;
+      dataout2.hList = hList;
       myEmitter.emit("Send_Sth", dataout2);
     }
   }
 
-  quickLogin(socket, data: Data): Data {
+  quickLogin(socket, data: Data) {
     // todo  登陆成功后，删除以前的id
     if (this.idToUsername[data.id]) {
       console.log("指纹匹配成功");
-      let me = this.userList.filter(t => { return t.name === this.idToUsername[data.id]; })[0];
+      let me = hList.userList.filter(t => { return t.name === this.idToUsername[data.id]; })[0];
       this.socketIdToUser.delete(data.id);
       let id = this.idgen();
-
       this.idToUsername[id] = me.name;
       this.socketIdToUser[socket.id] = me;
       me.isOnline = true;
       me.socketId = socket.id;
-
-
       let dataout = new Data("quickloginSuccess", me);
       dataout.id = id;
       dataout.login = true;
       dataout.socketId = socket.id;
       dataout.yourself = me;
-      return dataout;
+      dataout.hList = hList;
+      myEmitter.emit("Send_Sth", dataout);
+      let dataOut = new Data("updata");
+      dataOut.hList = hList;
+      myEmitter.emit("Send_Sth", dataOut);
     } else {
       console.log("指纹匹配失败");
       let tmpuser = new User(data.name);
       tmpuser.socketId = socket.id;
       let dataout = new Data("quickLogin_fail", tmpuser);
       dataout.login = false;
-      return dataout;
-
+      myEmitter.emit("Send_Sth", dataout);
     }
 
 
@@ -123,12 +131,12 @@ export class UserService {
       if (!game.started) {
         console.log("游戏没开始，从playerlist中剔除该用户");
         this.socketIdToUser[socketId].isSeat = false;
-        game.playerList.splice(game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+        hList.playerList.splice(hList.playerList.indexOf(this.socketIdToUser[socketId]), 1);
       }
 
       // 测试代码---------------
       // this.socketIdToUser[socketId].isSeat = false;
-      // game.playerList.splice(game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+      // hList.playerList.splice(hList.playerList.indexOf(this.socketIdToUser[socketId]), 1);
 
       // 测试代码---------------
 
@@ -144,19 +152,18 @@ export class UserService {
   userSeat(socketId) {
     if (this.socketIdToUser[socketId].isSeat) {
       this.socketIdToUser[socketId].isSeat = false;
-      game.playerList.splice(game.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+      hList.playerList.splice(hList.playerList.indexOf(this.socketIdToUser[socketId]), 1);
       console.log("站起来" + this.socketIdToUser[socketId].name);
     } else {
       this.socketIdToUser[socketId].isSeat = true;
-      game.playerList.push(this.socketIdToUser[socketId]);
+      hList.playerList.push(this.socketIdToUser[socketId]);
       console.log("坐下了" + this.socketIdToUser[socketId].name);
     }
 
     let data = new Data("updata");
-    data.playerList = game.playerList;
+    data.playerList = hList.playerList;
+    data.hList = hList;
     myEmitter.emit("Send_Sth", data);
-
-
   }
 
 
