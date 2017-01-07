@@ -28,7 +28,7 @@ io.on("connection", socket => {
   });
 
   socket.on("system", (data: Data) => {
-    console.log("收到客户端发来的system请求", data.type, socket.id);
+    console.log("system", data);
     io.emit(data.key);
     switch (data.type) {
       case "login":
@@ -84,7 +84,8 @@ io.on("connection", socket => {
         }
       case "preSelect":
         {
-          game.selectPre(data.user, true);
+
+          game.setPre(data.user);
           break;
         }
       case "speak_end":
@@ -134,6 +135,7 @@ io.on("connection", socket => {
       case "sendMsg":
         {
           console.log(Date().toString().slice(15, 25), socket.id, "发言");
+          game.speaksth(data.msg.body);
           // let dataOut = new MsgData(userService.socketIdToUser[socket.id]);
           // dataOut.msgFrom = userService.socketIdToUser[socket.id];
           // dataOut.msg = data.msg;
@@ -160,17 +162,23 @@ myEmitter.on("speak_start", () => {
   myEmitter.emit("Send_Sth", data);
   speakAll();
   async function speakAll() {
+    game.speakstart(game.pre);
     await speakPlease(game.pre);
+    game.speakend();
     myEmitter.emit("Send_Sth", new Data("someone_speak_end"));
     if (game.prm.isSurvival) {
+      game.speakstart(game.prm);
       await speakPlease(game.prm);
+      game.speakend();
       myEmitter.emit("Send_Sth", new Data("someone_speak_end"));
     }
     let preNo = hList.playerList.indexOf(game.pre);
     console.log("总统编号", preNo);
     for (let i = 0; i < hList.playerList.length; i++) {
       if (!hList.playerList[preNo].isPre && !hList.playerList[preNo].isPrm && hList.playerList[preNo].isSurvival) {
+        game.speakstart(hList.playerList[preNo]);
         await speakPlease(hList.playerList[preNo]);
+        game.speakend();
         myEmitter.emit("Send_Sth", new Data("someone_speak_end"));
       }
       if (preNo === hList.playerList.length - 1) {
@@ -182,13 +190,11 @@ myEmitter.on("speak_start", () => {
     myEmitter.emit("speak_endAll");
   }
   function speakPlease(who: User) {
-    // let msgDataToAll = new MsgData(who);
-    // msgDataToAll.type = "newPlayerSpeak";
-    // msgDataToAll.speakTime = game.speakTime;
-    // msgDataToAll.whoIsSpeaking = who;
-    // myEmitter.emit("Send_Sth", msgDataToAll);
-    console.log("发言消息发送", who.name);
+    let data = new Data("newPlayerSpeak");
+    data.whoIsSpeaking = who;
+    myEmitter.emit("Send_Sth", data);
 
+    console.log("发言消息发送", who.name);
     return new Promise(resolve => {
       let this_timer = setTimeout(() => {
         myEmitter.removeListener("speak_end", () => {

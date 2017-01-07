@@ -60,7 +60,7 @@ io.on("connection", function (socket) {
         myEmitter_1.myEmitter.emit("Send_Sth", dataOut);
     });
     socket.on("system", function (data) {
-        console.log("收到客户端发来的system请求", data.type, socket.id);
+        console.log("system", data);
         io.emit(data.key);
         switch (data.type) {
             case "login":
@@ -116,7 +116,7 @@ io.on("connection", function (socket) {
                 }
             case "preSelect":
                 {
-                    exports.game.selectPre(data.user, true);
+                    exports.game.setPre(data.user);
                     break;
                 }
             case "speak_end":
@@ -158,6 +158,7 @@ io.on("connection", function (socket) {
             case "sendMsg":
                 {
                     console.log(Date().toString().slice(15, 25), socket.id, "发言");
+                    exports.game.speaksth(data.msg.body);
                     // let dataOut = new MsgData(userService.socketIdToUser[socket.id]);
                     // dataOut.msgFrom = userService.socketIdToUser[socket.id];
                     // dataOut.msg = data.msg;
@@ -181,15 +182,20 @@ myEmitter_1.myEmitter.on("speak_start", function () {
             var preNo, i;
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, speakPlease(exports.game.pre)];
+                    case 0:
+                        exports.game.speakstart(exports.game.pre);
+                        return [4 /*yield*/, speakPlease(exports.game.pre)];
                     case 1:
                         _a.sent();
+                        exports.game.speakend();
                         myEmitter_1.myEmitter.emit("Send_Sth", new data_1.Data("someone_speak_end"));
                         if (!exports.game.prm.isSurvival)
                             return [3 /*break*/, 3];
+                        exports.game.speakstart(exports.game.prm);
                         return [4 /*yield*/, speakPlease(exports.game.prm)];
                     case 2:
                         _a.sent();
+                        exports.game.speakend();
                         myEmitter_1.myEmitter.emit("Send_Sth", new data_1.Data("someone_speak_end"));
                         _a.label = 3;
                     case 3:
@@ -202,9 +208,11 @@ myEmitter_1.myEmitter.on("speak_start", function () {
                             return [3 /*break*/, 8];
                         if (!(!exports.hList.playerList[preNo].isPre && !exports.hList.playerList[preNo].isPrm && exports.hList.playerList[preNo].isSurvival))
                             return [3 /*break*/, 6];
+                        exports.game.speakstart(exports.hList.playerList[preNo]);
                         return [4 /*yield*/, speakPlease(exports.hList.playerList[preNo])];
                     case 5:
                         _a.sent();
+                        exports.game.speakend();
                         myEmitter_1.myEmitter.emit("Send_Sth", new data_1.Data("someone_speak_end"));
                         _a.label = 6;
                     case 6:
@@ -226,11 +234,9 @@ myEmitter_1.myEmitter.on("speak_start", function () {
         });
     }
     function speakPlease(who) {
-        // let msgDataToAll = new MsgData(who);
-        // msgDataToAll.type = "newPlayerSpeak";
-        // msgDataToAll.speakTime = game.speakTime;
-        // msgDataToAll.whoIsSpeaking = who;
-        // myEmitter.emit("Send_Sth", msgDataToAll);
+        var data = new data_1.Data("newPlayerSpeak");
+        data.whoIsSpeaking = who;
+        myEmitter_1.myEmitter.emit("Send_Sth", data);
         console.log("发言消息发送", who.name);
         return new Promise(function (resolve) {
             var this_timer = setTimeout(function () {
