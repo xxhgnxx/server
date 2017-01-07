@@ -101,6 +101,8 @@ export class UserService {
       this.socketIdToUser[socket.id] = me;
       me.isOnline = true;
       me.socketId = socket.id;
+      this.idToUsername.delete(this.usernameToId[me.name]);
+      this.usernameToId[me.name] = id;
       let dataout = new Data("quickloginSuccess", me);
       dataout.id = id;
       dataout.login = true;

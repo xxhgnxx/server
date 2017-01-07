@@ -12,21 +12,21 @@ export class MsgServices {
   pushAll(msg: Msg, user1?: User, user2?: User, user3?: User) {
     for (let i = 0; i < this.allPlayerMsgList.length; i++) {
       if ((this.noToUser[i].name !== (user1 && user1.name)) && (this.noToUser[i].name !== (user3 && user3.name)) && (this.noToUser[i].name !== (user2 && user2.name))) {
-        this.allPlayerMsgList[i].push(Object.assign({}, msg));
+        this.allPlayerMsgList[i].push(JSON.parse(JSON.stringify(msg)));
         myEmitter.emit("Push_msg", this.noToUser[i], msg);
       }
     }
   }
 
   pushWho(who: User, msg: Msg) {
-    this.allPlayerMsgList[who.seatNo - 1].push(Object.assign({}, msg));
+    this.allPlayerMsgList[who.seatNo - 1].push(JSON.parse(JSON.stringify(msg)));
     myEmitter.emit("Push_msg", who, msg);
   }
 
 
   updataWho(who: User, msg: Msg) {
     this.allPlayerMsgList[who.seatNo - 1].pop();
-    this.allPlayerMsgList[who.seatNo - 1].push(Object.assign({}, msg));
+    this.allPlayerMsgList[who.seatNo - 1].push(JSON.parse(JSON.stringify(msg)));
     myEmitter.emit("Updata_msg", who, msg);
   }
 
@@ -39,6 +39,18 @@ export class MsgServices {
       }
     }
   }
+
+  updataspk(n, msg?: string) {
+    for (let i = 0; i < this.allPlayerMsgList.length; i++) {
+      let thismsg = this.allPlayerMsgList[i][this.allPlayerMsgList[i].length - 1];
+      thismsg.step = n;
+      if (msg) {
+        thismsg.msgList.push(msg);
+      }
+      myEmitter.emit("Updata_msg", this.noToUser[i], thismsg);
+    }
+  }
+
   changestepWho(who: User, n) {
     let msg = this.allPlayerMsgList[who.seatNo - 1][this.allPlayerMsgList[who.seatNo - 1].length - 1];
     msg.step = n;
@@ -49,10 +61,11 @@ export class MsgServices {
 
 
   updataAll(msg: Msg, user1?: User, user2?: User, user3?: User) {
+
     for (let i = 0; i < this.allPlayerMsgList.length; i++) {
       if ((this.noToUser[i].name !== (user1 && user1.name)) && (this.noToUser[i].name !== (user3 && user3.name)) && (this.noToUser[i].name !== (user2 && user2.name))) {
         this.allPlayerMsgList[i].pop();
-        this.allPlayerMsgList[i].push(Object.assign({}, msg));
+        this.allPlayerMsgList[i].push(JSON.parse(JSON.stringify(msg)));
         myEmitter.emit("Updata_msg", this.noToUser[i], msg);
       }
     }

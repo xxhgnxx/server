@@ -33,6 +33,7 @@ export class Game {
   lastPre: User;
   lastPrm: User;
   pre: User;
+  tmppre: any;  // 发动指定总统，需要的临时存储区
   prenext: User;
   prm: User;
   prmTmp: User;  // 待投票的总理
@@ -204,7 +205,7 @@ export class Game {
    * 选总统，一轮结束后继续游戏的象征
    * 通知玩家
    */
-  selectPre(player: User, next?: boolean) {
+  selectPre(player: User) {
     if (this.prm) {
       this.prm.isPrm = false;
     }
@@ -214,15 +215,22 @@ export class Game {
     }
     this.pre = userService.socketIdToUser[player.socketId];
     this.pre.isPre = true;
-    if (!next) {
+    if (this.tmppre) {
+      // 技能导致非顺序指定
+      console.log("技能导致总统顺序变化");
+      this.prenext = this.tmppre;
+      this.tmppre = false;
+    } else {
       // 顺序指定下届总统
+      console.log("顺序指定总统");
       if (hList.playerList[hList.playerList.indexOf(player) + 1]) {
         this.prenext = hList.playerList[hList.playerList.indexOf(player) + 1];
       } else {
         this.prenext = hList.playerList[0];
       };
-    } else { }
-    console.log("本届总统是", this.pre.name);
+    }
+
+    console.log("本届总统是", this.pre.name, "->", this.prenext.name);
     // console.log("下届总统是", this.prenext.name);
     // 处理是否可选问题
     let playerSurvival = hList.playerList.filter(t => {
@@ -402,82 +410,21 @@ export class Game {
 
   }
 
-  // //  法案选择
-  // proSelect1(proDiscard: number, list: Array<number>) {
-  //   console.log("待选牌堆" + list.length + "张");
-  //   if (list.length === 3) {
-  //     list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
-  //     this.findPro(list);
-  //   } else {
-  //     list.splice(list.indexOf(proDiscard), 1); // 从待选牌堆删除该法案
-  //     console.log("待选牌堆" + list);
-  //     this.proEff(list[0]); // 法案生效
-  //   }
-  // }
-  //
-  //
-  // // 选法案，list为空则为总统，list有内容则为总理
-  // findPro1(list?: Array<number>) {
-  //   let body = new Array<any>();
-  //   body[0] = "x";
-  //   body[1] = "x";
-  //   body[2] = "x";
-  //   if (!list) {
-  //     console.log("总统选提案");
-  //     let proTmp = [];
-  //     console.log("牌堆顶位置编号" + this.proIndex);
-  //     if (this.proIndex < 2) {
-  //       console.log("牌堆数量不足");
-  //       this.shuffle();
-  //     }
-  //     // 摸牌
-  //     for (let n = this.proIndex; n >= this.proIndex - 2; n--) {
-  //       proTmp.push(this.proList[n]);
-  //     };
-  //     this.proIndex = this.proIndex - 3; // 摸三张后牌堆顶变换
-  //     this.proX3List = proTmp;
-  //     console.log("摸牌之后牌堆顶位置编号" + this.proIndex);
-  //     console.log("待选法案堆" + proTmp);
-  //     let data = new Data("choosePro");
-  //     data.msg = new Msg("playerCP", "等待总统选提案", "prechoose");
-  //     data.proIndex = this.proIndex;
-  //     myEmitter.emit("Send_Sth", data);
-  //     let data2 = new Data("choosePro", this.pre);
-  //     body[0] = this.proX3List;
-  //     data2.msg = new Msg("playerCP", body, "you_pre");
-  //     data2.proX3List = this.proX3List;
-  //     myEmitter.emit("Send_Sth", data2);
-  //   } else {
-  //     // 通知普通玩家
-  //     this.proX3List = list;
-  //     body[1] = this.proX3List;
-  //     if (this.proEffRed === 5) {
-  //       // todo
-  //       console.log("通知普通玩家总理选提案");
-  //       let data = new Data("choosePro2");
-  //       data.msg = new Msg("system", "总统弃掉了一张卡片，等待总理 " + this.prm.name + " 选提案");
-  //       data.proList = this.proList;
-  //       data.proIndex = this.proIndex;
-  //       myEmitter.emit("Send_Sth", data);
-  //       console.log("总理选提案（否决权）");
-  //       let data2 = new Data("choosePro2", this.prm);
-  //       data2.proX3List = this.proX3List;
-  //       myEmitter.emit("Send_Sth", data2);
-  //     } else {
-  //       console.log("通知普通玩家总理选提案");
-  //       let data = new Data("choosePro");
-  //       data.msg = new Msg("system", "等待总理 " + this.prm.name + " 选提案..");
-  //       data.proList = this.proList;
-  //       data.proIndex = this.proIndex;
-  //       myEmitter.emit("Send_Sth", data);
-  //       console.log("总理选提案(普通)");
-  //       let data2 = new Data("choosePro", this.prm);
-  //       data2.msg = new Msg("playerCP", "等待总统选提案", "you_prm");
-  //       data2.proX3List = this.proX3List;
-  //       myEmitter.emit("Send_Sth", data2);
-  //     }
-  //   }
-  // }
+
+  speakstart(who: User) {
+    let spk = new Msg("playerSpk");
+    spk.who = Object.assign({}, who);
+    spk.step = 1;
+    spk.msgList = [];
+    this.msgServices.pushAll(spk);
+  }
+
+  speaksth(msg) {
+    this.msgServices.updataspk(1, msg);
+  }
+  speakend() {
+    this.msgServices.updataspk(0);
+  }
 
 
   //  法案牌过程
@@ -751,6 +698,13 @@ export class Game {
       // data.msg = new Msg("system", "等待总统调查身份");
       myEmitter.emit("Send_Sth", data);
 
+      let invPlayerMsg = new Msg("invPlayer");
+      invPlayerMsg.step = 2;
+      invPlayerMsg.who = this.pre;
+      this.msgServices.pushAll(invPlayerMsg, this.pre);
+      invPlayerMsg.userList = hList.playerList;
+      invPlayerMsg.step = 1;
+      this.msgServices.pushWho(this.pre, invPlayerMsg);
     } else {
       console.log("告知调查结果");
       let data2 = new Data("invPlayer", this.pre);
@@ -766,6 +720,15 @@ export class Game {
       let data3 = new Data("通知");
       // data3.msg = new Msg("system", "总统成功调查了 " + player.name + " 的身份");
       myEmitter.emit("Send_Sth", data3);
+
+      let invPlayerMsg = new Msg("invPlayer");
+      invPlayerMsg.who = this.pre;
+      invPlayerMsg.step = 4;
+      invPlayerMsg.target = player;
+      this.msgServices.updataAll(invPlayerMsg, this.pre);
+      invPlayerMsg.step = 3;
+      invPlayerMsg.role = data2.other;
+      this.msgServices.updataWho(this.pre, invPlayerMsg);
       // todo 玩家确认过程
       setTimeout(() => { myEmitter.emit("skill_is_done"); }, 0);
     }
@@ -773,15 +736,36 @@ export class Game {
 
   }
   // 技能：指定总统
-  async    preSelect() {
+  preSelect() {
     console.log("指定总统");
     let tmp = new Array<Data>();
     let data = new Data("preSelect");
     // data.msg = new Msg("choosePlayer", "等待总统 " + this.pre.name + " 执行权利：指定下任总统..", "preSelect");
+    let preSelect_msg = new Msg("preSelect");
+    preSelect_msg.step = 2;
+    preSelect_msg.who = this.pre;
+    this.msgServices.pushAll(preSelect_msg, this.pre);
+    preSelect_msg.userList = hList.playerList;
+    preSelect_msg.step = 1;
+    this.msgServices.pushWho(this.pre, preSelect_msg);
     myEmitter.emit("Send_Sth", data);
-
+  }
+  setPre(player) {
+    let invPlayerMsg = new Msg("preSelect");
+    invPlayerMsg.who = this.pre;
+    invPlayerMsg.step = 3;
+    invPlayerMsg.target = player;
+    this.msgServices.updataAll(invPlayerMsg);
+    this.tmppre = this.prenext;
+    player = hList.playerList.filter(t => {
+      return t.name === player.name;
+    })[0];
+    this.prenext = player;
     setTimeout(() => { myEmitter.emit("skill_is_done"); }, 0);
   }
+
+
+
   // 技能：枪决
   toKill(player?: User) {
     console.log("枪决");
@@ -792,7 +776,13 @@ export class Game {
       let data = new Data("toKill");
       // data.msg = new Msg("choosePlayer", "等待总统 " + this.pre.name + " 执行权利：决定枪决的目标", "toKill");
       myEmitter.emit("Send_Sth", data);
-
+      let toKill = new Msg("toKill");
+      toKill.step = 2;
+      toKill.who = this.pre;
+      this.msgServices.pushAll(toKill, this.pre);
+      toKill.userList = hList.playerList;
+      toKill.step = 1;
+      this.msgServices.pushWho(this.pre, toKill);
     } else {
       // 结算杀人选择
       // 从玩家状态修改
@@ -803,6 +793,11 @@ export class Game {
       data.hList = hList;
       // data.msg = new Msg("system", "总统枪决了 " + player.name);
       myEmitter.emit("Send_Sth", data);
+      let toKill = new Msg("toKill");
+      toKill.who = this.pre;
+      toKill.step = 3;
+      toKill.target = player;
+      this.msgServices.updataAll(toKill);
       player = userService.socketIdToUser[player.socketId];
       if (player.role === "Hitler") {
         console.log("游戏结束");
@@ -850,7 +845,16 @@ export class Game {
       return !t.isPre;
     });
     // data2.msg = new Msg("hgnlookpro", ["x", "x", "x"], "notyou");
+    let hgnlookpro_msg = new Msg("hgnlookpro");
+    hgnlookpro_msg.step = 1;
+    hgnlookpro_msg.proX3List = data.proX3List;
+    hgnlookpro_msg.who = this.pre;
+    this.msgServices.pushWho(this.pre, hgnlookpro_msg);
+    hgnlookpro_msg.proX3List = ["x", "x", "x"];
+    hgnlookpro_msg.step = 0;
+    this.msgServices.pushAll(hgnlookpro_msg, this.pre);
     myEmitter.emit("Send_Sth", data2);
+
 
 
     // todo 玩家查看法案时的确认过程

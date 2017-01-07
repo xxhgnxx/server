@@ -1,8 +1,8 @@
 {
-  "name": "angular-quickstart",
+  "name": "server",
   "version": "1.0.0",
   "scripts": {
-    "start": "node app/src/server.js"
+    "start": "devtool app/src/server.js"
   },
   "dependencies": {
     "js-yaml": "^3.7.0",

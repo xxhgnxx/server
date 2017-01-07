@@ -99,6 +99,8 @@ var UserService = (function () {
             this.socketIdToUser[socket.id] = me;
             me.isOnline = true;
             me.socketId = socket.id;
+            this.idToUsername.delete(this.usernameToId[me.name]);
+            this.usernameToId[me.name] = id;
             var dataout = new data_1.Data("quickloginSuccess", me);
             dataout.id = id;
             dataout.login = true;
