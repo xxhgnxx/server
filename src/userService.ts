@@ -51,6 +51,7 @@ export class UserService {
         dataout2.hList = hList;
         dataout2.playerList = hList.playerList;
         myEmitter.emit("Send_Sth", dataout2);
+        this.welcomeback(me);
       } else {
         console.log("密码错误");
         let tmpuser = new User(data.name);
@@ -87,6 +88,7 @@ export class UserService {
       let dataout2 = new Data("updata");
       dataout2.hList = hList;
       myEmitter.emit("Send_Sth", dataout2);
+      this.welcomeback(me);
     }
   }
 
@@ -113,6 +115,7 @@ export class UserService {
       let dataOut = new Data("updata");
       dataOut.hList = hList;
       myEmitter.emit("Send_Sth", dataOut);
+      this.welcomeback(me);
     } else {
       console.log("指纹匹配失败");
       let tmpuser = new User(data.name);
@@ -168,7 +171,9 @@ export class UserService {
     myEmitter.emit("Send_Sth", data);
   }
 
-
+  welcomeback(you: User) {
+    game.welcomeback(you);
+  }
 
   joinRoom(name) { }
   joinGame(name) { }

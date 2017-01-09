@@ -225,13 +225,18 @@ myEmitter.on("Updata_msg", (user: User, msg: Msg) => {
   data.msg = msg;
   socketIdtoSocket[user.socketId].emit("system", data);
 });
+myEmitter.on("show_msg", (user: User, msgList: Array<Msg>) => {
+  let data = new Data("show_msg");
+  data.msgList = msgList;
+  socketIdtoSocket[user.socketId].emit("system", data);
+});
 
 myEmitter.on("Send_Sth", (data) => {
   if (typeof data.toWho === "undefined") {
     console.log("发给所有人", data.type);
     data.toWho = hList.userList;
   }
-
+console.log(data);
   if (Array.isArray(data.toWho)) {
     for (let v_toWho of data.toWho) {
       if (typeof data.hList !== "undefined") {

@@ -47,6 +47,7 @@ var UserService = (function () {
                 dataout2.hList = server_2.hList;
                 dataout2.playerList = server_2.hList.playerList;
                 myEmitter_1.myEmitter.emit("Send_Sth", dataout2);
+                this.welcomeback(me);
             }
             else {
                 console.log("密码错误");
@@ -85,6 +86,7 @@ var UserService = (function () {
             var dataout2 = new data_1.Data("updata");
             dataout2.hList = server_2.hList;
             myEmitter_1.myEmitter.emit("Send_Sth", dataout2);
+            this.welcomeback(me);
         }
     };
     UserService.prototype.quickLogin = function (socket, data) {
@@ -111,6 +113,7 @@ var UserService = (function () {
             var dataOut = new data_1.Data("updata");
             dataOut.hList = server_2.hList;
             myEmitter_1.myEmitter.emit("Send_Sth", dataOut);
+            this.welcomeback(me);
         }
         else {
             console.log("指纹匹配失败");
@@ -157,6 +160,9 @@ var UserService = (function () {
         data.playerList = server_2.hList.playerList;
         data.hList = server_2.hList;
         myEmitter_1.myEmitter.emit("Send_Sth", data);
+    };
+    UserService.prototype.welcomeback = function (you) {
+        server_1.game.welcomeback(you);
     };
     UserService.prototype.joinRoom = function (name) { };
     UserService.prototype.joinGame = function (name) { };

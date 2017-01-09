@@ -266,11 +266,17 @@ myEmitter_1.myEmitter.on("Updata_msg", function (user, msg) {
     data.msg = msg;
     socketIdtoSocket[user.socketId].emit("system", data);
 });
+myEmitter_1.myEmitter.on("show_msg", function (user, msgList) {
+    var data = new data_1.Data("show_msg");
+    data.msgList = msgList;
+    socketIdtoSocket[user.socketId].emit("system", data);
+});
 myEmitter_1.myEmitter.on("Send_Sth", function (data) {
     if (typeof data.toWho === "undefined") {
         console.log("发给所有人", data.type);
         data.toWho = exports.hList.userList;
     }
+    console.log(data);
     if (Array.isArray(data.toWho)) {
         for (var _i = 0, _a = data.toWho; _i < _a.length; _i++) {
             var v_toWho = _a[_i];

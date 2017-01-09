@@ -16,6 +16,7 @@ export class Msg {
   userList: Array<User>; // 用户列表
   proX3List: Array<any>;  //  法案选择列表
   role: string; // 身份；
+  voteRes: number;  // 投票结果
   pro;
   prm;
   pre;

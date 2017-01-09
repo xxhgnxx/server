@@ -6,6 +6,7 @@ export class Data {
   name: string;
   pass: string;
   msg: Msg;
+  msgList: Array<Msg>;
   yourself: User;
   user: User;
   hList: any;
@@ -21,7 +22,7 @@ export class Data {
   started: boolean;       // 游戏是否开始
   speakTime: number;
   role: string;
-
+  skillnamelist: Array<number>;
 
   // 玩家相关
   userList: Array<User>; // 用户列表传输
