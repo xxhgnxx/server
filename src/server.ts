@@ -166,7 +166,7 @@ myEmitter.on("speak_start", () => {
     await speakPlease(game.pre);
     game.speakend();
     myEmitter.emit("Send_Sth", new Data("someone_speak_end"));
-    if (game.prm.isSurvival) {
+    if (game.prm && game.prm.isSurvival) {
       game.speakstart(game.prm);
       await speakPlease(game.prm);
       game.speakend();
@@ -236,7 +236,7 @@ myEmitter.on("Send_Sth", (data) => {
     console.log("发给所有人", data.type);
     data.toWho = hList.userList;
   }
-console.log(data);
+  console.log(data);
   if (Array.isArray(data.toWho)) {
     for (let v_toWho of data.toWho) {
       if (typeof data.hList !== "undefined") {

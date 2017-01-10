@@ -20,6 +20,7 @@ export class Data {
 
   // 游戏数据
   started: boolean;       // 游戏是否开始
+  gametype: number;
   speakTime: number;
   role: string;
   skillnamelist: Array<number>;

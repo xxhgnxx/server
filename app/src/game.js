@@ -70,6 +70,7 @@ var Game = (function () {
         dataOut.liberalCount = this.liberalCount;
         dataOut.toWho = who;
         dataOut.started = this.started;
+        dataOut.gametype = this.gametype;
         // dataOut.started = this.started;
         dataOut.speakTime = this.speakTime;
         myEmitter_1.myEmitter.emit("Send_Sth", dataOut);
@@ -95,6 +96,7 @@ var Game = (function () {
             dataOut.proIndex = this.proIndex;
             dataOut.proList = this.proList;
             dataOut.started = this.started;
+            dataOut.gametype = this.gametype;
             dataOut.speakTime = this.speakTime;
             dataOut.skillnamelist = this.skillnamelist;
             dataOut.user = server_1.userService.socketIdToUser[socketId];
@@ -119,12 +121,12 @@ var Game = (function () {
             server_2.hList.playerList[i].role = "Fascist";
             server_2.hList.playerList[i].hitler = this.hitler;
         }
-        if (server_2.hList.playerList.length <= 6) {
+        if (server_2.hList.playerList.length < 7) {
             for (var i = 1; i <= this.fascistCount; i++) {
                 this.hitler["fascist" + i.toString()] = JSON.parse(JSON.stringify(server_2.hList.playerList[i]));
             }
         }
-        for (var n = 0; n <= this.fascistCount; n++) {
+        for (var n = 1; n <= this.fascistCount; n++) {
             for (var i = 1; i <= this.fascistCount; i++) {
                 server_2.hList.playerList[n]["fascist" + i.toString()] = JSON.parse(JSON.stringify(server_2.hList.playerList[i]));
             }
@@ -162,6 +164,7 @@ var Game = (function () {
         if (plyaerCount >= 9) {
             console.log("选择9-10人游戏");
             this.fascistCount = 3;
+            this.gametype = 3;
             this.skillList[0] = this.invPlayer.bind(this);
             this.skillList[1] = this.invPlayer.bind(this);
             this.skillList[2] = this.preSelect.bind(this);
@@ -172,6 +175,7 @@ var Game = (function () {
         else {
             if (plyaerCount >= 7) {
                 this.fascistCount = 2;
+                this.gametype = 2;
                 console.log("选择7-8人游戏");
                 this.skillList[0] = this.nothing.bind(this);
                 this.skillList[1] = this.invPlayer.bind(this);
@@ -183,8 +187,9 @@ var Game = (function () {
             else {
                 if (plyaerCount >= 5) {
                     this.fascistCount = 1;
+                    this.gametype = 1;
                     console.log("选择5-6人游戏");
-                    this.skillList[0] = this.nothing.bind(this);
+                    this.skillList[0] = this.toKill.bind(this);
                     this.skillList[1] = this.nothing.bind(this);
                     this.skillList[2] = this.toLookPro.bind(this);
                     this.skillList[3] = this.toKill.bind(this);
@@ -218,6 +223,15 @@ var Game = (function () {
         // data.msg = new Msg("system", "法案牌堆和弃牌堆重新洗混了");
         myEmitter_1.myEmitter.emit("Send_Sth", data);
     };
+    Game.prototype.next = function (player) {
+        if (server_2.hList.playerList[server_2.hList.playerList.indexOf(player) + 1]) {
+            this.prenext = server_2.hList.playerList[server_2.hList.playerList.indexOf(player) + 1];
+        }
+        else {
+            this.prenext = server_2.hList.playerList[0];
+        }
+        ;
+    };
     /**
      * 选总统，一轮结束后继续游戏的象征
      * 通知玩家
@@ -241,13 +255,10 @@ var Game = (function () {
         else {
             // 顺序指定下届总统
             console.log("顺序指定总统");
-            if (server_2.hList.playerList[server_2.hList.playerList.indexOf(player) + 1]) {
-                this.prenext = server_2.hList.playerList[server_2.hList.playerList.indexOf(player) + 1];
+            this.next(player);
+            if (!this.prenext.isSurvival) {
+                this.next(this.prenext);
             }
-            else {
-                this.prenext = server_2.hList.playerList[0];
-            }
-            ;
         }
         console.log("本届总统是", this.pre.name, "->", this.prenext.name);
         // console.log("下届总统是", this.prenext.name);
@@ -627,7 +638,7 @@ var Game = (function () {
                         console.log("游戏结束");
                         myEmitter_1.myEmitter.emit("Send_Sth", data2);
                         this.gameover("游戏结束，红色胜利");
-                        return [3 /*break*/, 5];
+                        return [3 /*break*/, 6];
                     case 1:
                         if (!(this.proEffBlue === 5))
                             return [3 /*break*/, 2];
@@ -637,22 +648,18 @@ var Game = (function () {
                         console.log("游戏结束");
                         this.gameover("游戏结束，蓝色胜利");
                         myEmitter_1.myEmitter.emit("Send_Sth", data2);
-                        return [3 /*break*/, 5];
+                        return [3 /*break*/, 6];
                     case 2:
                         this.proList.splice(this.proList.indexOf(pro), 1); // 从总牌堆删除生效法案
                         for (n in server_2.hList.playerList) {
                             server_2.hList.playerList[n].isLastPre = false;
                             server_2.hList.playerList[n].isLastPrm = false;
                         } // 上届政府标记归零
-                        if (!force) {
-                            // 普通生效，变更政府标记
-                            this.pre.isLastPre = true;
-                            this.prm.isLastPrm = true;
-                        }
-                        else {
-                            // 强制生效时，牌堆顶摸走一张
-                            this.proIndex = this.proIndex - 1;
-                        }
+                        if (!!force)
+                            return [3 /*break*/, 5];
+                        // 普通生效，变更政府标记
+                        this.pre.isLastPre = true;
+                        this.prm.isLastPrm = true;
                         data.proIndex = this.proIndex;
                         data.proList = this.proList;
                         myEmitter_1.myEmitter.emit("Send_Sth", data);
@@ -674,8 +681,25 @@ var Game = (function () {
                             myEmitter_1.myEmitter.emit("Send_Sth", msgDataToAll);
                             _this.selectPre(_this.prenext); // 切换总统 继续游戏
                         });
-                        _a.label = 5;
-                    case 5: return [2 /*return*/];
+                        return [3 /*break*/, 6];
+                    case 5:
+                        // 强制生效时，牌堆顶摸走一张
+                        server_2.hList.playerList.filter(function (t) {
+                            t.isLastPre = false;
+                            t.isLastPrm = false;
+                        });
+                        this.proIndex = this.proIndex - 1;
+                        data.proIndex = this.proIndex;
+                        data.proList = this.proList;
+                        myEmitter_1.myEmitter.emit("Send_Sth", data);
+                        myEmitter_1.myEmitter.emit("speak_start");
+                        myEmitter_1.myEmitter.once("speak_endAll", function () {
+                            var msgDataToAll = new data_1.Data("speak_endAll");
+                            myEmitter_1.myEmitter.emit("Send_Sth", msgDataToAll);
+                            _this.selectPre(_this.prenext); // 切换总统 继续游戏
+                        });
+                        _a.label = 6;
+                    case 6: return [2 /*return*/];
                 }
             });
         });

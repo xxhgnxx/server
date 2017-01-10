@@ -16,6 +16,7 @@ export class Game {
   proX3List = new Array<any>(); // 法案牌摸的三张牌
   proX3ListHide = new Array<any>(); // 法案牌摸的三张牌平民模板
   started: boolean = false;       // 游戏是否开始
+  gametype: number;
   // playerList: Array<User>; // 加入本次游戏的玩家列表，主要用于消息发送
   pro: number; // 生效法案
 
@@ -71,6 +72,7 @@ export class Game {
     dataOut.liberalCount = this.liberalCount;
     dataOut.toWho = who;
     dataOut.started = this.started;
+    dataOut.gametype = this.gametype;
     // dataOut.started = this.started;
     dataOut.speakTime = this.speakTime;
     myEmitter.emit("Send_Sth", dataOut);
@@ -96,6 +98,7 @@ export class Game {
       dataOut.proIndex = this.proIndex;
       dataOut.proList = this.proList;
       dataOut.started = this.started;
+      dataOut.gametype = this.gametype;
       dataOut.speakTime = this.speakTime;
       dataOut.skillnamelist = this.skillnamelist;
       dataOut.user = userService.socketIdToUser[socketId];
@@ -128,12 +131,12 @@ export class Game {
     }
 
 
-    if (hList.playerList.length <= 6) {
+    if (hList.playerList.length < 7) {
       for (let i = 1; i <= this.fascistCount; i++) {
         this.hitler["fascist" + i.toString()] = JSON.parse(JSON.stringify(hList.playerList[i]));
       }
     }
-    for (let n = 0; n <= this.fascistCount; n++) {
+    for (let n = 1; n <= this.fascistCount; n++) {
       for (let i = 1; i <= this.fascistCount; i++) {
         hList.playerList[n]["fascist" + i.toString()] = JSON.parse(JSON.stringify(hList.playerList[i]));
       }
@@ -174,6 +177,7 @@ export class Game {
     if (plyaerCount >= 9) {
       console.log("选择9-10人游戏");
       this.fascistCount = 3;
+      this.gametype = 3;
       this.skillList[0] = this.invPlayer.bind(this);
       this.skillList[1] = this.invPlayer.bind(this);
       this.skillList[2] = this.preSelect.bind(this);
@@ -184,6 +188,7 @@ export class Game {
     } else {
       if (plyaerCount >= 7) {
         this.fascistCount = 2;
+        this.gametype = 2;
         console.log("选择7-8人游戏");
         this.skillList[0] = this.nothing.bind(this);
         this.skillList[1] = this.invPlayer.bind(this);
@@ -194,8 +199,9 @@ export class Game {
       } else {
         if (plyaerCount >= 5) {
           this.fascistCount = 1;
+          this.gametype = 1;
           console.log("选择5-6人游戏");
-          this.skillList[0] = this.nothing.bind(this);
+          this.skillList[0] = this.toKill.bind(this);
           this.skillList[1] = this.nothing.bind(this);
           this.skillList[2] = this.toLookPro.bind(this);
           this.skillList[3] = this.toKill.bind(this);
@@ -234,6 +240,15 @@ export class Game {
   }
 
 
+  next(player: User) {
+    if (hList.playerList[hList.playerList.indexOf(player) + 1]) {
+      this.prenext = hList.playerList[hList.playerList.indexOf(player) + 1];
+    } else {
+      this.prenext = hList.playerList[0];
+    };
+  }
+
+
   /**
    * 选总统，一轮结束后继续游戏的象征
    * 通知玩家
@@ -256,11 +271,10 @@ export class Game {
     } else {
       // 顺序指定下届总统
       console.log("顺序指定总统");
-      if (hList.playerList[hList.playerList.indexOf(player) + 1]) {
-        this.prenext = hList.playerList[hList.playerList.indexOf(player) + 1];
-      } else {
-        this.prenext = hList.playerList[0];
-      };
+      this.next(player);
+      if (!this.prenext.isSurvival) {
+        this.next(this.prenext);
+      }
     }
 
     console.log("本届总统是", this.pre.name, "->", this.prenext.name);
@@ -703,32 +717,53 @@ export class Game {
           // 普通生效，变更政府标记
           this.pre.isLastPre = true;
           this.prm.isLastPrm = true;
+
+          data.proIndex = this.proIndex;
+          data.proList = this.proList;
+          myEmitter.emit("Send_Sth", data);
+
+          if (pro >= 6) {
+            // 红色法案生效，执行技能
+            // test
+            console.log("执行技能");
+
+            this.skillList[this.proEffRed - 1]();
+            console.log("等待动作");
+            await this.waitSth();
+
+          } else {
+            // 蓝色法案生效，无技能
+          }
+          myEmitter.emit("speak_start");
+          myEmitter.once("speak_endAll", () => {
+            let msgDataToAll = new Data("speak_endAll");
+            myEmitter.emit("Send_Sth", msgDataToAll);
+            this.selectPre(this.prenext); // 切换总统 继续游戏
+          });
+
         } else {
           // 强制生效时，牌堆顶摸走一张
+          hList.playerList.filter((t) => {
+            t.isLastPre = false;
+            t.isLastPrm = false;
+          });
           this.proIndex = this.proIndex - 1;
+          data.proIndex = this.proIndex;
+          data.proList = this.proList;
+          myEmitter.emit("Send_Sth", data);
+          myEmitter.emit("speak_start");
+          myEmitter.once("speak_endAll", () => {
+            let msgDataToAll = new Data("speak_endAll");
+            myEmitter.emit("Send_Sth", msgDataToAll);
+            this.selectPre(this.prenext); // 切换总统 继续游戏
+          });
+
+
+
         }
-        data.proIndex = this.proIndex;
-        data.proList = this.proList;
-        myEmitter.emit("Send_Sth", data);
 
-        if (pro >= 6) {
-          // 红色法案生效，执行技能
-          // test
-          console.log("执行技能");
 
-          this.skillList[this.proEffRed - 1]();
-          console.log("等待动作");
-          await this.waitSth();
 
-        } else {
-          // 蓝色法案生效，无技能
-        }
-        myEmitter.emit("speak_start");
-        myEmitter.once("speak_endAll", () => {
-          let msgDataToAll = new Data("speak_endAll");
-          myEmitter.emit("Send_Sth", msgDataToAll);
-          this.selectPre(this.prenext); // 切换总统 继续游戏
-        });
       }
     }
 

@@ -189,7 +189,7 @@ myEmitter_1.myEmitter.on("speak_start", function () {
                         _a.sent();
                         exports.game.speakend();
                         myEmitter_1.myEmitter.emit("Send_Sth", new data_1.Data("someone_speak_end"));
-                        if (!exports.game.prm.isSurvival)
+                        if (!(exports.game.prm && exports.game.prm.isSurvival))
                             return [3 /*break*/, 3];
                         exports.game.speakstart(exports.game.prm);
                         return [4 /*yield*/, speakPlease(exports.game.prm)];
