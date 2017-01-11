@@ -88,7 +88,7 @@ export class UserService {
       let dataout2 = new Data("updata");
       dataout2.hList = hList;
       myEmitter.emit("Send_Sth", dataout2);
-      this.welcomeback(me);
+      this.welcomeback(this.socketIdToUser[socket.id]);
     }
   }
 

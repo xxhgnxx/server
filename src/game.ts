@@ -27,8 +27,8 @@ export class Game {
   liberalCount: number; // 自由党玩家数量
 
   isVoted: boolean;
-  voteList: Array<Array<number>>; // 投票总记录
-  nowVote: Array<number>; // 当前正在进行的投票
+  voteList: Array<any>; // 投票总记录
+  nowVote: Array<any>; // 当前正在进行的投票
   voteRes: number; // 投票结果
   voteCount: number;  //  投票数量
 
@@ -73,6 +73,7 @@ export class Game {
     dataOut.toWho = who;
     dataOut.started = this.started;
     dataOut.gametype = this.gametype;
+    dataOut.voteList = this.voteList;
     // dataOut.started = this.started;
     dataOut.speakTime = this.speakTime;
     myEmitter.emit("Send_Sth", dataOut);
@@ -326,7 +327,7 @@ export class Game {
     this.prmTmp = userService.socketIdToUser[user.socketId];
     this.prmTmp.isPrm = true;
     console.log(Date().toString().slice(15, 25), "创建新投票");
-    this.setVote();
+    this.setVote(this.pre, user);
     let data0 = new Data("updata");
     myEmitter.emit("Send_Sth", data0);
 
@@ -349,21 +350,29 @@ export class Game {
 
 
   // 发起投票
-  setVote() {
-    let tmp = new Array<number>();
+  setVote(pre: User, prm: User) {
+    let tmp = new Voteone();
+    tmp["pre"] = JSON.parse(JSON.stringify(pre));
+    tmp["prm"] = JSON.parse(JSON.stringify(prm));
+    tmp["prm"].isPrm = true;
+    tmp["pro"] = "x";
+    tmp["skill"] = "x";
+    tmp["skilltarget"] = "x";
+    tmp["see"] = false;
     this.voteCount = 0;
     for (let i = 0; i < hList.playerList.length; i++) {
       if (hList.playerList[i].isSurvival) {
-        tmp[hList.playerList[i].seatNo - 1] = 0;
+        tmp.list[hList.playerList[i].seatNo - 1] = 0;
       } else {
-        tmp[hList.playerList[i].seatNo - 1] = 4;
+        tmp.list[hList.playerList[i].seatNo - 1] = 4;
         this.voteCount = this.voteCount + 1;
       }
     }
     this.voteList.push(tmp);
-    this.nowVote = tmp;
+    this.nowVote = tmp.list;
     this.isVoted = false;
     this.voteRes = 0;
+    console.log(this.voteList);
   }
 
   // 结算投票
@@ -383,6 +392,8 @@ export class Game {
     msgvote.nowVote = this.nowVote;
     this.msgServices.updataAll(msgvote);
     if (this.voteCount === this.nowVote.length) {
+      this.voteList[this.nowVote.length - 1]["see"] = true;
+      this.updatavote();
       // 投票完成
       let data = new Data("updata");
       if (this.nowVote.filter(t => {
@@ -670,6 +681,8 @@ export class Game {
 
 
   async    proEff(pro: number, force?: boolean) {
+    this.voteList[this.voteList.length - 1]["pro"] = pro;
+    this.updatavote();
     let data = new Data("proEff");
     this.failTimes = 0;
     this.pro = pro;
@@ -786,7 +799,8 @@ export class Game {
   // 技能：调查身份
   async    invPlayer(player?: User) {
     console.log("调查身份");
-
+    this.voteList[this.voteList.length - 1]["skill"] = "invPlayer";
+    this.updatavote();
     if (typeof player === "undefined") {
       console.log("通知总统 调查身份");
       let data = new Data("invPlayer");
@@ -800,6 +814,8 @@ export class Game {
       invPlayerMsg.step = 1;
       this.msgServices.pushWho(this.pre, invPlayerMsg);
     } else {
+      this.voteList[this.voteList.length - 1]["skilltarget"] = player;
+      this.updatavote();
       console.log("告知调查结果");
       let data2 = new Data("invPlayer", this.pre);
       if (this.liberal.filter(t => {
@@ -830,6 +846,8 @@ export class Game {
   }
   // 技能：指定总统
   preSelect() {
+    this.voteList[this.voteList.length - 1]["skill"] = "preSelect";
+    this.updatavote();
     console.log("指定总统");
     let tmp = new Array<Data>();
     let data = new Data("preSelect");
@@ -844,6 +862,8 @@ export class Game {
     myEmitter.emit("Send_Sth", data);
   }
   setPre(player) {
+    this.voteList[this.voteList.length - 1]["skilltarget"] = player;
+    this.updatavote();
     let invPlayerMsg = new Msg("preSelect");
     invPlayerMsg.who = this.pre;
     invPlayerMsg.step = 3;
@@ -862,7 +882,8 @@ export class Game {
   // 技能：枪决
   toKill(player?: User) {
     console.log("枪决");
-
+    this.voteList[this.voteList.length - 1]["skill"] = "tokill";
+    this.updatavote();
     // 杀人动作
     if (typeof player === "undefined") {
       // 通知杀人列表
@@ -878,6 +899,8 @@ export class Game {
     } else {
       // 结算杀人选择
       // 从玩家状态修改
+      this.voteList[this.voteList.length - 1]["skilltarget"] = player;
+      this.updatavote();
       player = userService.socketIdToUser[player.socketId];
       player.isSurvival = false;
       let data = new Data("toKill");
@@ -917,6 +940,8 @@ export class Game {
   }
   // 技能：查看法案
   toLookPro() {
+    this.voteList[this.voteList.length - 1]["skill"] = "toLookPro";
+    this.updatavote();
     console.log("查看法案");
     if (this.proIndex < 2) {
       console.log("牌堆数量不足");
@@ -954,11 +979,14 @@ export class Game {
   gameover(res) {
     let tmp = new Array<Data>();
     let data = new Data("gameover");
+    this.started = false;
+    data.started = this.started;
     data.other = res;
     myEmitter.emit("Send_Sth", data);
     let gameovermsg = new Msg("gameover");
     gameovermsg.msg = res;
     gameovermsg.userList = hList.playerList;
+
     this.msgServices.pushAll(gameovermsg);
 
 
@@ -1028,6 +1056,17 @@ export class Game {
   }
 
 
+  updatavote() {
+    let data = new Data("updatavote");
+    data.voteList = this.voteList;
+    myEmitter.emit("Send_Sth", data);
+  }
+
 
   constructor() { hList.playerList = hList.playerList; }
+}
+
+
+class Voteone {
+  list = [];
 }

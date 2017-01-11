@@ -71,6 +71,7 @@ var Game = (function () {
         dataOut.toWho = who;
         dataOut.started = this.started;
         dataOut.gametype = this.gametype;
+        dataOut.voteList = this.voteList;
         // dataOut.started = this.started;
         dataOut.speakTime = this.speakTime;
         myEmitter_1.myEmitter.emit("Send_Sth", dataOut);
@@ -309,7 +310,7 @@ var Game = (function () {
         this.prmTmp = server_1.userService.socketIdToUser[user.socketId];
         this.prmTmp.isPrm = true;
         console.log(Date().toString().slice(15, 25), "创建新投票");
-        this.setVote();
+        this.setVote(this.pre, user);
         var data0 = new data_1.Data("updata");
         myEmitter_1.myEmitter.emit("Send_Sth", data0);
         var data = new data_1.Data("pleaseVote");
@@ -324,22 +325,30 @@ var Game = (function () {
         this.msgServices.updataAll(msgvotestart);
     };
     // 发起投票
-    Game.prototype.setVote = function () {
-        var tmp = new Array();
+    Game.prototype.setVote = function (pre, prm) {
+        var tmp = new Voteone();
+        tmp["pre"] = JSON.parse(JSON.stringify(pre));
+        tmp["prm"] = JSON.parse(JSON.stringify(prm));
+        tmp["prm"].isPrm = true;
+        tmp["pro"] = "x";
+        tmp["skill"] = "x";
+        tmp["skilltarget"] = "x";
+        tmp["see"] = false;
         this.voteCount = 0;
         for (var i = 0; i < server_2.hList.playerList.length; i++) {
             if (server_2.hList.playerList[i].isSurvival) {
-                tmp[server_2.hList.playerList[i].seatNo - 1] = 0;
+                tmp.list[server_2.hList.playerList[i].seatNo - 1] = 0;
             }
             else {
-                tmp[server_2.hList.playerList[i].seatNo - 1] = 4;
+                tmp.list[server_2.hList.playerList[i].seatNo - 1] = 4;
                 this.voteCount = this.voteCount + 1;
             }
         }
         this.voteList.push(tmp);
-        this.nowVote = tmp;
+        this.nowVote = tmp.list;
         this.isVoted = false;
         this.voteRes = 0;
+        console.log(this.voteList);
     };
     // 结算投票
     Game.prototype.getVote = function (sockeId, res) {
@@ -357,6 +366,8 @@ var Game = (function () {
         msgvote.nowVote = this.nowVote;
         this.msgServices.updataAll(msgvote);
         if (this.voteCount === this.nowVote.length) {
+            this.voteList[this.nowVote.length - 1]["see"] = true;
+            this.updatavote();
             // 投票完成
             var data = new data_1.Data("updata");
             if (this.nowVote.filter(function (t) {
@@ -612,6 +623,8 @@ var Game = (function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
+                        this.voteList[this.voteList.length - 1]["pro"] = pro;
+                        this.updatavote();
                         data = new data_1.Data("proEff");
                         this.failTimes = 0;
                         this.pro = pro;
@@ -718,6 +731,8 @@ var Game = (function () {
             var data, invPlayerMsg, data2, data3, invPlayerMsg;
             return __generator(this, function (_a) {
                 console.log("调查身份");
+                this.voteList[this.voteList.length - 1]["skill"] = "invPlayer";
+                this.updatavote();
                 if (typeof player === "undefined") {
                     console.log("通知总统 调查身份");
                     data = new data_1.Data("invPlayer");
@@ -731,6 +746,8 @@ var Game = (function () {
                     this.msgServices.pushWho(this.pre, invPlayerMsg);
                 }
                 else {
+                    this.voteList[this.voteList.length - 1]["skilltarget"] = player;
+                    this.updatavote();
                     console.log("告知调查结果");
                     data2 = new data_1.Data("invPlayer", this.pre);
                     if (this.liberal.filter(function (t) {
@@ -762,6 +779,8 @@ var Game = (function () {
     };
     // 技能：指定总统
     Game.prototype.preSelect = function () {
+        this.voteList[this.voteList.length - 1]["skill"] = "preSelect";
+        this.updatavote();
         console.log("指定总统");
         var tmp = new Array();
         var data = new data_1.Data("preSelect");
@@ -776,6 +795,8 @@ var Game = (function () {
         myEmitter_1.myEmitter.emit("Send_Sth", data);
     };
     Game.prototype.setPre = function (player) {
+        this.voteList[this.voteList.length - 1]["skilltarget"] = player;
+        this.updatavote();
         var invPlayerMsg = new hgnmsg_1.Msg("preSelect");
         invPlayerMsg.who = this.pre;
         invPlayerMsg.step = 3;
@@ -791,6 +812,8 @@ var Game = (function () {
     // 技能：枪决
     Game.prototype.toKill = function (player) {
         console.log("枪决");
+        this.voteList[this.voteList.length - 1]["skill"] = "tokill";
+        this.updatavote();
         // 杀人动作
         if (typeof player === "undefined") {
             // 通知杀人列表
@@ -807,6 +830,8 @@ var Game = (function () {
         else {
             // 结算杀人选择
             // 从玩家状态修改
+            this.voteList[this.voteList.length - 1]["skilltarget"] = player;
+            this.updatavote();
             player = server_1.userService.socketIdToUser[player.socketId];
             player.isSurvival = false;
             var data = new data_1.Data("toKill");
@@ -844,6 +869,8 @@ var Game = (function () {
     };
     // 技能：查看法案
     Game.prototype.toLookPro = function () {
+        this.voteList[this.voteList.length - 1]["skill"] = "toLookPro";
+        this.updatavote();
         console.log("查看法案");
         if (this.proIndex < 2) {
             console.log("牌堆数量不足");
@@ -875,6 +902,8 @@ var Game = (function () {
     Game.prototype.gameover = function (res) {
         var tmp = new Array();
         var data = new data_1.Data("gameover");
+        this.started = false;
+        data.started = this.started;
         data.other = res;
         myEmitter_1.myEmitter.emit("Send_Sth", data);
         var gameovermsg = new hgnmsg_1.Msg("gameover");
@@ -937,6 +966,17 @@ var Game = (function () {
                 console.log("bug!!!!!bug!!!!!bug!!!!!bug!!!!!bug!!!!!bug!!!!!bug!!!!!bug!!!!!");
         }
     };
+    Game.prototype.updatavote = function () {
+        var data = new data_1.Data("updatavote");
+        data.voteList = this.voteList;
+        myEmitter_1.myEmitter.emit("Send_Sth", data);
+    };
     return Game;
 }());
 exports.Game = Game;
+var Voteone = (function () {
+    function Voteone() {
+        this.list = [];
+    }
+    return Voteone;
+}());

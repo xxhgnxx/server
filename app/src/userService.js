@@ -86,7 +86,7 @@ var UserService = (function () {
             var dataout2 = new data_1.Data("updata");
             dataout2.hList = server_2.hList;
             myEmitter_1.myEmitter.emit("Send_Sth", dataout2);
-            this.welcomeback(me);
+            this.welcomeback(this.socketIdToUser[socket.id]);
         }
     };
     UserService.prototype.quickLogin = function (socket, data) {
