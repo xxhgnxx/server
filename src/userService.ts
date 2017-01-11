@@ -81,9 +81,9 @@ export class UserService {
       dataout.hList = hList;
       myEmitter.emit("Send_Sth", dataout);
       // ------test 测试用
-      this.socketIdToUser[socket.id].isSeat = true;
-      hList.playerList.push(this.socketIdToUser[socket.id]);
-      console.log("坐下了" + this.socketIdToUser[socket.id].name);
+      // this.socketIdToUser[socket.id].isSeat = true;
+      // hList.playerList.push(this.socketIdToUser[socket.id]);
+      // console.log("坐下了" + this.socketIdToUser[socket.id].name);
       // ------test 测试用
       let dataout2 = new Data("updata");
       dataout2.hList = hList;

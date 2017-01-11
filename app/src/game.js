@@ -189,7 +189,7 @@ var Game = (function () {
                     this.fascistCount = 1;
                     this.gametype = 1;
                     console.log("选择5-6人游戏");
-                    this.skillList[0] = this.toKill.bind(this);
+                    this.skillList[0] = this.nothing.bind(this);
                     this.skillList[1] = this.nothing.bind(this);
                     this.skillList[2] = this.toLookPro.bind(this);
                     this.skillList[3] = this.toKill.bind(this);
@@ -608,7 +608,7 @@ var Game = (function () {
     Game.prototype.proEff = function (pro, force) {
         return __awaiter(this, void 0, void 0, function () {
             var _this = this;
-            var data, data2, n;
+            var data, data2, n, force_1;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
@@ -692,6 +692,9 @@ var Game = (function () {
                         data.proIndex = this.proIndex;
                         data.proList = this.proList;
                         myEmitter_1.myEmitter.emit("Send_Sth", data);
+                        force_1 = new hgnmsg_1.Msg("force");
+                        force_1.pro = pro;
+                        this.msgServices.pushAll(force_1);
                         myEmitter_1.myEmitter.emit("speak_start");
                         myEmitter_1.myEmitter.once("speak_endAll", function () {
                             var msgDataToAll = new data_1.Data("speak_endAll");

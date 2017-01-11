@@ -201,7 +201,7 @@ export class Game {
           this.fascistCount = 1;
           this.gametype = 1;
           console.log("选择5-6人游戏");
-          this.skillList[0] = this.toKill.bind(this);
+          this.skillList[0] = this.nothing.bind(this);
           this.skillList[1] = this.nothing.bind(this);
           this.skillList[2] = this.toLookPro.bind(this);
           this.skillList[3] = this.toKill.bind(this);
@@ -751,6 +751,9 @@ export class Game {
           data.proIndex = this.proIndex;
           data.proList = this.proList;
           myEmitter.emit("Send_Sth", data);
+          let force = new Msg("force");
+          force.pro = pro;
+          this.msgServices.pushAll(force);
           myEmitter.emit("speak_start");
           myEmitter.once("speak_endAll", () => {
             let msgDataToAll = new Data("speak_endAll");

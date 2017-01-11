@@ -79,9 +79,9 @@ var UserService = (function () {
             dataout.hList = server_2.hList;
             myEmitter_1.myEmitter.emit("Send_Sth", dataout);
             // ------test 测试用
-            this.socketIdToUser[socket.id].isSeat = true;
-            server_2.hList.playerList.push(this.socketIdToUser[socket.id]);
-            console.log("坐下了" + this.socketIdToUser[socket.id].name);
+            // this.socketIdToUser[socket.id].isSeat = true;
+            // hList.playerList.push(this.socketIdToUser[socket.id]);
+            // console.log("坐下了" + this.socketIdToUser[socket.id].name);
             // ------test 测试用
             var dataout2 = new data_1.Data("updata");
             dataout2.hList = server_2.hList;
