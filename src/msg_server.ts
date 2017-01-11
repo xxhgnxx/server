@@ -54,7 +54,7 @@ export class MsgServices {
     }
     for (let i = 0; i < hList.userList.length; i++) {
       if (hList.userList[i].seatNo === 0) {
-        myEmitter.emit("Push_msg", hList.userList[i], msg);
+        myEmitter.emit("Updata_msg", hList.userList[i], msg);
       }
     }
   }
@@ -70,6 +70,7 @@ export class MsgServices {
     this.allPlayerMsgList[who.seatNo].push(JSON.parse(JSON.stringify(msg)));
     myEmitter.emit("Updata_msg", who, msg);
   }
+
   updataspk(n, msg?: string) {
     for (let i = 0; i < this.allPlayerMsgList.length; i++) {
       let thismsg = this.allPlayerMsgList[i][this.allPlayerMsgList[i].length - 1];
@@ -79,6 +80,13 @@ export class MsgServices {
       }
       if (i) {
         myEmitter.emit("Updata_msg", this.noToUser[i], thismsg);
+        console.log(this.noToUser[i],thismsg);
+      }
+    }
+    for (let i = 0; i < hList.userList.length; i++) {
+
+      if (hList.userList[i].seatNo === 0) {
+        myEmitter.emit("Updata_msg", hList.userList[i], this.allPlayerMsgList[0][this.allPlayerMsgList[0].length - 1]);
       }
     }
   }

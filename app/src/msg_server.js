@@ -68,7 +68,7 @@ var MsgServices = (function () {
         }
         for (var i = 0; i < server_1.hList.userList.length; i++) {
             if (server_1.hList.userList[i].seatNo === 0) {
-                myEmitter_1.myEmitter.emit("Push_msg", server_1.hList.userList[i], msg);
+                myEmitter_1.myEmitter.emit("Updata_msg", server_1.hList.userList[i], msg);
             }
         }
     };
@@ -90,6 +90,12 @@ var MsgServices = (function () {
             }
             if (i) {
                 myEmitter_1.myEmitter.emit("Updata_msg", this.noToUser[i], thismsg);
+                console.log(this.noToUser[i], thismsg);
+            }
+        }
+        for (var i = 0; i < server_1.hList.userList.length; i++) {
+            if (server_1.hList.userList[i].seatNo === 0) {
+                myEmitter_1.myEmitter.emit("Updata_msg", server_1.hList.userList[i], this.allPlayerMsgList[0][this.allPlayerMsgList[0].length - 1]);
             }
         }
     };

@@ -172,18 +172,18 @@ io.on("connection", function (socket) {
 });
 myEmitter_1.myEmitter.on("speak_start", function () {
     // 通知所有玩家 进入发言状态
-    console.log("speak_start");
-    var data = new data_1.Data("speak_start");
-    // data.msg = new Msg("system", "玩家顺序发言开始，请切换到“发言界面查看发言”");
-    myEmitter_1.myEmitter.emit("Send_Sth", data);
     speakAll();
     function speakAll() {
         return __awaiter(this, void 0, void 0, function () {
-            var preNo, i;
+            var data, preNo, i;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
                         exports.game.speakstart(exports.game.pre);
+                        console.log("speak_start");
+                        data = new data_1.Data("speak_start");
+                        // data.msg = new Msg("system", "玩家顺序发言开始，请切换到“发言界面查看发言”");
+                        myEmitter_1.myEmitter.emit("Send_Sth", data);
                         return [4 /*yield*/, speakPlease(exports.game.pre)];
                     case 1:
                         _a.sent();
@@ -235,6 +235,7 @@ myEmitter_1.myEmitter.on("speak_start", function () {
     }
     function speakPlease(who) {
         var data = new data_1.Data("newPlayerSpeak");
+        data.speakTime = exports.game.speakTime;
         data.whoIsSpeaking = who;
         myEmitter_1.myEmitter.emit("Send_Sth", data);
         console.log("发言消息发送", who.name);

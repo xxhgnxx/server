@@ -47,7 +47,7 @@ export class Game {
   // 游戏发言
   msgListAll = new Array<any>(); // 总发言记录
   msgListNow = new Array<any>(); // 当前发言记录
-  speakTime: number = 2000;  // 发言时间 设定 单位 秒
+  speakTime: number = 20;  // 发言时间 设定 单位 秒
 
 
   lastTurn = new Map(); // 上一次政府情况

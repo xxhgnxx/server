@@ -156,13 +156,14 @@ io.on("connection", socket => {
 
 myEmitter.on("speak_start", () => {
   // 通知所有玩家 进入发言状态
-  console.log("speak_start");
-  let data = new Data("speak_start");
-  // data.msg = new Msg("system", "玩家顺序发言开始，请切换到“发言界面查看发言”");
-  myEmitter.emit("Send_Sth", data);
+
   speakAll();
   async function speakAll() {
     game.speakstart(game.pre);
+    console.log("speak_start");
+    let data = new Data("speak_start");
+    // data.msg = new Msg("system", "玩家顺序发言开始，请切换到“发言界面查看发言”");
+    myEmitter.emit("Send_Sth", data);
     await speakPlease(game.pre);
     game.speakend();
     myEmitter.emit("Send_Sth", new Data("someone_speak_end"));
@@ -191,6 +192,7 @@ myEmitter.on("speak_start", () => {
   }
   function speakPlease(who: User) {
     let data = new Data("newPlayerSpeak");
+    data.speakTime = game.speakTime;
     data.whoIsSpeaking = who;
     myEmitter.emit("Send_Sth", data);
 
