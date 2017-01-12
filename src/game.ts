@@ -20,6 +20,8 @@ export class Game {
   // playerList: Array<User>; // 加入本次游戏的玩家列表，主要用于消息发送
   pro: number; // 生效法案
 
+  oldgame = false;
+
   proEffBlue: number; // 法案生效数
   proEffRed: number; // 法案生效数
   failTimes: number; // 政府组件失败次数
@@ -56,7 +58,7 @@ export class Game {
   msgServices: MsgServices;
 
   welcomeback(who: User) {
-    if (!this.started) {
+    if (!this.started && !this.oldgame) {
       console.log("游戏未开始，无资料更新");
       return;
     }
@@ -392,7 +394,7 @@ export class Game {
     msgvote.nowVote = this.nowVote;
     this.msgServices.updataAll(msgvote);
     if (this.voteCount === this.nowVote.length) {
-      this.voteList[this.nowVote.length - 1]["see"] = true;
+      this.voteList[this.voteList.length - 1]["see"] = true;
       this.updatavote();
       // 投票完成
       let data = new Data("updata");

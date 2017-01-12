@@ -46,6 +46,7 @@ var Game = (function () {
         this.proX3List = new Array(); // 法案牌摸的三张牌
         this.proX3ListHide = new Array(); // 法案牌摸的三张牌平民模板
         this.started = false; // 游戏是否开始
+        this.oldgame = false;
         // 游戏发言
         this.msgListAll = new Array(); // 总发言记录
         this.msgListNow = new Array(); // 当前发言记录
@@ -54,7 +55,7 @@ var Game = (function () {
         server_2.hList.playerList = server_2.hList.playerList;
     }
     Game.prototype.welcomeback = function (who) {
-        if (!this.started) {
+        if (!this.started && !this.oldgame) {
             console.log("游戏未开始，无资料更新");
             return;
         }
@@ -366,7 +367,7 @@ var Game = (function () {
         msgvote.nowVote = this.nowVote;
         this.msgServices.updataAll(msgvote);
         if (this.voteCount === this.nowVote.length) {
-            this.voteList[this.nowVote.length - 1]["see"] = true;
+            this.voteList[this.voteList.length - 1]["see"] = true;
             this.updatavote();
             // 投票完成
             var data = new data_1.Data("updata");
