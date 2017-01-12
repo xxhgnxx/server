@@ -50,7 +50,7 @@ var Game = (function () {
         // 游戏发言
         this.msgListAll = new Array(); // 总发言记录
         this.msgListNow = new Array(); // 当前发言记录
-        this.speakTime = 20; // 发言时间 设定 单位 秒
+        this.speakTime = 180; // 发言时间 设定 单位 秒
         this.lastTurn = new Map(); // 上一次政府情况
         server_2.hList.playerList = server_2.hList.playerList;
     }
