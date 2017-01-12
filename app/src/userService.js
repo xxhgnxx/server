@@ -130,7 +130,10 @@ var UserService = (function () {
             if (!server_1.game.started) {
                 console.log("游戏没开始，从playerlist中剔除该用户");
                 this.socketIdToUser[socketId].isSeat = false;
-                server_2.hList.playerList.splice(server_2.hList.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+                var tmpuser = server_2.hList.playerList.indexOf(this.socketIdToUser[socketId]);
+                if (tmpuser !== -1) {
+                    server_2.hList.playerList.splice(tmpuser, 1);
+                }
             }
             // 测试代码---------------
             // this.socketIdToUser[socketId].isSeat = false;

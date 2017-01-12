@@ -136,7 +136,10 @@ export class UserService {
       if (!game.started) {
         console.log("游戏没开始，从playerlist中剔除该用户");
         this.socketIdToUser[socketId].isSeat = false;
-        hList.playerList.splice(hList.playerList.indexOf(this.socketIdToUser[socketId]), 1);
+        let tmpuser = hList.playerList.indexOf(this.socketIdToUser[socketId]);
+        if (tmpuser !== -1) {
+          hList.playerList.splice(tmpuser, 1);
+        }
       }
 
       // 测试代码---------------
