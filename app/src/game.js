@@ -145,8 +145,8 @@ var Game = (function () {
         var data = new data_1.Data("updata");
         data.hList = server_2.hList;
         myEmitter_1.myEmitter.emit("Send_Sth", data);
-        console.log(server_2.hList);
-        console.log("-------完成");
+        // console.log(hList);
+        // console.log("-------完成");
     };
     Game.prototype.makePro = function () {
         // 法案牌生成
@@ -154,7 +154,7 @@ var Game = (function () {
         for (var i = 0; i <= 16; i++) {
             this.proList.push(i);
         }
-        console.log(this.proList);
+        // console.log(this.proList);
     };
     /**
      * 选择游戏板
@@ -220,7 +220,7 @@ var Game = (function () {
         this.proList.sort(function (a, b) {
             return mytmp[a] - mytmp[b];
         });
-        console.log(this.proList);
+        // console.log(this.proList);
         var data = new data_1.Data("shuffle");
         // data.msg = new Msg("system", "法案牌堆和弃牌堆重新洗混了");
         myEmitter_1.myEmitter.emit("Send_Sth", data);
@@ -349,7 +349,7 @@ var Game = (function () {
         this.nowVote = tmp.list;
         this.isVoted = false;
         this.voteRes = 0;
-        console.log(this.voteList);
+        // console.log(this.voteList);
     };
     // 结算投票
     Game.prototype.getVote = function (sockeId, res) {

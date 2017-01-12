@@ -15,11 +15,11 @@ let socketIdtoSocket = new Map();
 let yaml = require("js-yaml");
 
 io.on("connection", socket => {
-  console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
+  // console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
   socket.emit("ok");
   socketIdtoSocket[socket.id] = socket;
   socket.on("disconnect", () => {
-    console.log(Date().toString().slice(15, 25), socket.id, "离线");
+    // console.log(Date().toString().slice(15, 25), socket.id, "离线");
     socketIdtoSocket.delete(socket.id);
     let dataOut = new Data("logout");
     dataOut.other = userService.logout(socket.id);
@@ -28,24 +28,24 @@ io.on("connection", socket => {
   });
 
   socket.on("system", (data: Data) => {
-    console.log("system", data);
+    // console.log("system", data);
     io.emit(data.key);
     switch (data.type) {
       case "login":
         {
-          console.log(Date().toString().slice(15, 25), "try to login", data.name);
+          // console.log(Date().toString().slice(15, 25), "try to login", data.name);
           userService.login(socket, data);
           break;
         }
       case "quickLogin":
         {
-          console.log(Date().toString().slice(15, 25), "try to quickLogin", data.id);
+          // console.log(Date().toString().slice(15, 25), "try to quickLogin", data.id);
           userService.quickLogin(socket, data);
           break;
         }
       case "userSeat":
         {
-          console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
+          // console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
           userService.userSeat(socket.id);
           break;
         }
@@ -134,7 +134,7 @@ io.on("connection", socket => {
       // 普通文字消息
       case "sendMsg":
         {
-          console.log(Date().toString().slice(15, 25), socket.id, "发言");
+          // console.log(Date().toString().slice(15, 25), socket.id, "发言");
           game.speaksth(data.msg.body);
           // let dataOut = new MsgData(userService.socketIdToUser[socket.id]);
           // dataOut.msgFrom = userService.socketIdToUser[socket.id];
@@ -238,7 +238,7 @@ myEmitter.on("Send_Sth", (data) => {
     console.log("发给所有人", data.type);
     data.toWho = hList.userList;
   }
-  console.log(data);
+  // console.log(data);
   if (Array.isArray(data.toWho)) {
     for (let v_toWho of data.toWho) {
       if (typeof data.hList !== "undefined") {

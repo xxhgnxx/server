@@ -80,7 +80,7 @@ export class MsgServices {
       }
       if (i) {
         myEmitter.emit("Updata_msg", this.noToUser[i], thismsg);
-        console.log(this.noToUser[i], thismsg);
+        // console.log(this.noToUser[i], thismsg);
       }
     }
     for (let i = 0; i < hList.userList.length; i++) {

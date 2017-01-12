@@ -48,11 +48,11 @@ var myEmitter_1 = require("./myEmitter");
 var socketIdtoSocket = new Map();
 var yaml = require("js-yaml");
 io.on("connection", function (socket) {
-    console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
+    // console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
     socket.emit("ok");
     socketIdtoSocket[socket.id] = socket;
     socket.on("disconnect", function () {
-        console.log(Date().toString().slice(15, 25), socket.id, "离线");
+        // console.log(Date().toString().slice(15, 25), socket.id, "离线");
         socketIdtoSocket.delete(socket.id);
         var dataOut = new data_1.Data("logout");
         dataOut.other = exports.userService.logout(socket.id);
@@ -60,24 +60,24 @@ io.on("connection", function (socket) {
         myEmitter_1.myEmitter.emit("Send_Sth", dataOut);
     });
     socket.on("system", function (data) {
-        console.log("system", data);
+        // console.log("system", data);
         io.emit(data.key);
         switch (data.type) {
             case "login":
                 {
-                    console.log(Date().toString().slice(15, 25), "try to login", data.name);
+                    // console.log(Date().toString().slice(15, 25), "try to login", data.name);
                     exports.userService.login(socket, data);
                     break;
                 }
             case "quickLogin":
                 {
-                    console.log(Date().toString().slice(15, 25), "try to quickLogin", data.id);
+                    // console.log(Date().toString().slice(15, 25), "try to quickLogin", data.id);
                     exports.userService.quickLogin(socket, data);
                     break;
                 }
             case "userSeat":
                 {
-                    console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
+                    // console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
                     exports.userService.userSeat(socket.id);
                     break;
                 }
@@ -157,7 +157,7 @@ io.on("connection", function (socket) {
             // 普通文字消息
             case "sendMsg":
                 {
-                    console.log(Date().toString().slice(15, 25), socket.id, "发言");
+                    // console.log(Date().toString().slice(15, 25), socket.id, "发言");
                     exports.game.speaksth(data.msg.body);
                     // let dataOut = new MsgData(userService.socketIdToUser[socket.id]);
                     // dataOut.msgFrom = userService.socketIdToUser[socket.id];
@@ -277,7 +277,7 @@ myEmitter_1.myEmitter.on("Send_Sth", function (data) {
         console.log("发给所有人", data.type);
         data.toWho = exports.hList.userList;
     }
-    console.log(data);
+    // console.log(data);
     if (Array.isArray(data.toWho)) {
         for (var _i = 0, _a = data.toWho; _i < _a.length; _i++) {
             var v_toWho = _a[_i];

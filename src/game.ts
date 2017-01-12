@@ -157,8 +157,8 @@ export class Game {
     let data = new Data("updata");
     data.hList = hList;
     myEmitter.emit("Send_Sth", data);
-    console.log(hList);
-    console.log("-------完成");
+    // console.log(hList);
+    // console.log("-------完成");
   }
 
   makePro() {
@@ -167,7 +167,7 @@ export class Game {
     for (let i = 0; i <= 16; i++) {
       this.proList.push(i);
     }
-    console.log(this.proList);
+    // console.log(this.proList);
   }
 
   /**
@@ -234,7 +234,7 @@ export class Game {
     this.proList.sort((a, b) => {
       return mytmp[a] - mytmp[b];
     });
-    console.log(this.proList);
+    // console.log(this.proList);
 
     let data = new Data("shuffle");
     // data.msg = new Msg("system", "法案牌堆和弃牌堆重新洗混了");
@@ -374,7 +374,7 @@ export class Game {
     this.nowVote = tmp.list;
     this.isVoted = false;
     this.voteRes = 0;
-    console.log(this.voteList);
+    // console.log(this.voteList);
   }
 
   // 结算投票

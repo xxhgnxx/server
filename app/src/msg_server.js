@@ -90,7 +90,6 @@ var MsgServices = (function () {
             }
             if (i) {
                 myEmitter_1.myEmitter.emit("Updata_msg", this.noToUser[i], thismsg);
-                console.log(this.noToUser[i], thismsg);
             }
         }
         for (var i = 0; i < server_1.hList.userList.length; i++) {
