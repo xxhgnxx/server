@@ -4,7 +4,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
         function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
+        step((generator = generator.apply(thisArg, _arguments)).next());
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
@@ -105,6 +105,9 @@ var Game = (function () {
             dataOut.speakTime = this.speakTime;
             dataOut.skillnamelist = this.skillnamelist;
             dataOut.isgameover = this.isgameover;
+            dataOut.proEffBlue = this.proEffBlue;
+            dataOut.proEffRed = this.proEffRed;
+            dataOut.voteList = this.voteList;
             dataOut.user = server_1.userService.socketIdToUser[socketId];
             myEmitter_1.myEmitter.emit("Send_Sth", dataOut);
             var gamestartmsg = new hgnmsg_1.Msg("gamestart");
@@ -667,14 +670,16 @@ var Game = (function () {
                             server_2.hList.playerList[n].isLastPre = false;
                             server_2.hList.playerList[n].isLastPrm = false;
                         } // 上届政府标记归零
-                        if (!!force) return [3 /*break*/, 3];
+                        if (!!force)
+                            return [3 /*break*/, 3];
                         // 普通生效，变更政府标记
                         this.pre.isLastPre = true;
                         this.prm.isLastPrm = true;
                         data.proIndex = this.proIndex;
                         data.proList = this.proList;
                         myEmitter_1.myEmitter.emit("Send_Sth", data);
-                        if (!(pro >= 6)) return [3 /*break*/, 2];
+                        if (!(pro >= 6))
+                            return [3 /*break*/, 2];
                         // 红色法案生效，执行技能
                         // test
                         console.log("执行技能");

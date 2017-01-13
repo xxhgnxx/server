@@ -108,6 +108,9 @@ export class Game {
       dataOut.speakTime = this.speakTime;
       dataOut.skillnamelist = this.skillnamelist;
       dataOut.isgameover = this.isgameover;
+      dataOut.proEffBlue = this.proEffBlue;
+      dataOut.proEffRed = this.proEffRed;
+      dataOut.voteList = this.voteList;
       dataOut.user = userService.socketIdToUser[socketId];
       myEmitter.emit("Send_Sth", dataOut);
 
