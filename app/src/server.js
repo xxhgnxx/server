@@ -4,7 +4,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
         function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments)).next());
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
@@ -121,7 +121,7 @@ io.on("connection", function (socket) {
                 }
             case "speak_end":
                 {
-                    myEmitter_1.myEmitter.emit("speak_end");
+                    myEmitter_1.myEmitter.emit("speak_end" + data.user.name);
                     break;
                 }
             case "veto_all":
@@ -189,8 +189,7 @@ myEmitter_1.myEmitter.on("speak_start", function () {
                         _a.sent();
                         exports.game.speakend();
                         myEmitter_1.myEmitter.emit("Send_Sth", new data_1.Data("someone_speak_end"));
-                        if (!(exports.game.prm && exports.game.prm.isSurvival))
-                            return [3 /*break*/, 3];
+                        if (!(exports.game.prm && exports.game.prm.isSurvival)) return [3 /*break*/, 3];
                         exports.game.speakstart(exports.game.prm);
                         return [4 /*yield*/, speakPlease(exports.game.prm)];
                     case 2:
@@ -204,10 +203,8 @@ myEmitter_1.myEmitter.on("speak_start", function () {
                         i = 0;
                         _a.label = 4;
                     case 4:
-                        if (!(i < exports.hList.playerList.length))
-                            return [3 /*break*/, 8];
-                        if (!(!exports.hList.playerList[preNo].isPre && !exports.hList.playerList[preNo].isPrm && exports.hList.playerList[preNo].isSurvival))
-                            return [3 /*break*/, 6];
+                        if (!(i < exports.hList.playerList.length)) return [3 /*break*/, 8];
+                        if (!(!exports.hList.playerList[preNo].isPre && !exports.hList.playerList[preNo].isPrm && exports.hList.playerList[preNo].isSurvival)) return [3 /*break*/, 6];
                         exports.game.speakstart(exports.hList.playerList[preNo]);
                         return [4 /*yield*/, speakPlease(exports.hList.playerList[preNo])];
                     case 5:
@@ -245,16 +242,11 @@ myEmitter_1.myEmitter.on("speak_start", function () {
                 });
                 resolve("时间到,发言结束");
             }, exports.game.speakTime * 1000);
-            myEmitter_1.myEmitter.once("speak_end", function () {
+            myEmitter_1.myEmitter.once("speak_end" + who.name, function () {
                 clearTimeout(this_timer);
                 resolve("对方主动结束发言");
             });
         });
-        // .then((x) => {
-        //   // test
-        //   let data = new Data("someone_speak_end");
-        //   myEmitter.emit("Send_Sth", data);
-        // });
     }
 });
 myEmitter_1.myEmitter.on("Push_msg", function (user, msg) {

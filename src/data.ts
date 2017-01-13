@@ -3,6 +3,7 @@ import { User } from "./user";
 
 
 export class Data {
+  isgameover: boolean;
   name: string;
   pass: string;
   msg: Msg;

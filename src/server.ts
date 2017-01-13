@@ -90,7 +90,7 @@ io.on("connection", socket => {
         }
       case "speak_end":
         {
-          myEmitter.emit("speak_end");
+          myEmitter.emit("speak_end" + data.user.name);
           break;
         }
       case "veto_all":
@@ -203,16 +203,12 @@ myEmitter.on("speak_start", () => {
         });
         resolve("时间到,发言结束");
       }, game.speakTime * 1000);
-      myEmitter.once("speak_end", () => {
+      myEmitter.once("speak_end" + who.name, () => {
         clearTimeout(this_timer);
         resolve("对方主动结束发言");
       });
     });
-    // .then((x) => {
-    //   // test
-    //   let data = new Data("someone_speak_end");
-    //   myEmitter.emit("Send_Sth", data);
-    // });
+
   }
 
 });
