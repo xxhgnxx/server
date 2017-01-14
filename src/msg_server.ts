@@ -76,7 +76,10 @@ export class MsgServices {
       let thismsg = this.allPlayerMsgList[i][this.allPlayerMsgList[i].length - 1];
       thismsg.step = n;
       if (msg) {
-        thismsg.msgList.push(msg);
+        let tmplist = msg.split(/\r\n|\r|\n/g);
+        for (let i = 0; i < tmplist.length; i++) {
+          thismsg.msgList.push(tmplist[i]);
+        }
       }
       if (i) {
         myEmitter.emit("Updata_msg", this.noToUser[i], thismsg);

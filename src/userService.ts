@@ -157,6 +157,23 @@ export class UserService {
     }
   }
 
+
+
+  kick(name: string) {
+
+    let who = hList.userList.filter(t => { return t.name === name; })[0];
+    let tmpid = this.usernameToId[name];
+    delete this.idToUsername[tmpid];
+    delete this.usernameToId[name];
+    who.isOnline = false;
+    who.isSeat = false;
+    hList.playerList.splice(hList.playerList.indexOf(who), 1);
+    hList.userList.splice(hList.userList.indexOf(who), 1);
+
+
+  }
+
+
   userSeat(socketId) {
     if (this.socketIdToUser[socketId].isSeat) {
       this.socketIdToUser[socketId].isSeat = false;

@@ -148,6 +148,16 @@ var UserService = (function () {
             return "未登录用户离线";
         }
     };
+    UserService.prototype.kick = function (name) {
+        var who = server_2.hList.userList.filter(function (t) { return t.name === name; })[0];
+        var tmpid = this.usernameToId[name];
+        delete this.idToUsername[tmpid];
+        delete this.usernameToId[name];
+        who.isOnline = false;
+        who.isSeat = false;
+        server_2.hList.playerList.splice(server_2.hList.playerList.indexOf(who), 1);
+        server_2.hList.userList.splice(server_2.hList.userList.indexOf(who), 1);
+    };
     UserService.prototype.userSeat = function (socketId) {
         if (this.socketIdToUser[socketId].isSeat) {
             this.socketIdToUser[socketId].isSeat = false;

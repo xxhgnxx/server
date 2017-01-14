@@ -4,7 +4,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
         function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments)).next());
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
 var __generator = (this && this.__generator) || function (thisArg, body) {
@@ -81,7 +81,7 @@ var Game = (function () {
         myEmitter_1.myEmitter.emit("Send_Sth", dataOut);
         this.msgServices.showWho(who);
     };
-    Game.prototype.start = function (socketId) {
+    Game.prototype.start = function (skptime) {
         server_2.hList.playerList = server_2.hList.userList.filter(function (t) {
             return t.isSeat === true;
         });
@@ -102,15 +102,16 @@ var Game = (function () {
             dataOut.proList = this.proList;
             dataOut.started = this.started;
             dataOut.gametype = this.gametype;
+            this.speakTime = skptime;
             dataOut.speakTime = this.speakTime;
             dataOut.skillnamelist = this.skillnamelist;
             dataOut.isgameover = this.isgameover;
             dataOut.proEffBlue = this.proEffBlue;
             dataOut.proEffRed = this.proEffRed;
             dataOut.voteList = this.voteList;
-            dataOut.user = server_1.userService.socketIdToUser[socketId];
             myEmitter_1.myEmitter.emit("Send_Sth", dataOut);
             var gamestartmsg = new hgnmsg_1.Msg("gamestart");
+            gamestartmsg.time = this.speakTime;
             this.msgServices.pushAll(gamestartmsg);
             this.selectPre(server_2.hList.playerList[Math.floor(Math.random() * server_2.hList.playerList.length)]);
         }
@@ -198,7 +199,7 @@ var Game = (function () {
                     this.fascistCount = 1;
                     this.gametype = 1;
                     console.log("选择5-6人游戏");
-                    this.skillList[0] = this.toKill.bind(this);
+                    this.skillList[0] = this.nothing.bind(this);
                     this.skillList[1] = this.nothing.bind(this);
                     this.skillList[2] = this.toLookPro.bind(this);
                     this.skillList[3] = this.toKill.bind(this);
@@ -670,16 +671,14 @@ var Game = (function () {
                             server_2.hList.playerList[n].isLastPre = false;
                             server_2.hList.playerList[n].isLastPrm = false;
                         } // 上届政府标记归零
-                        if (!!force)
-                            return [3 /*break*/, 3];
+                        if (!!force) return [3 /*break*/, 3];
                         // 普通生效，变更政府标记
                         this.pre.isLastPre = true;
                         this.prm.isLastPrm = true;
                         data.proIndex = this.proIndex;
                         data.proList = this.proList;
                         myEmitter_1.myEmitter.emit("Send_Sth", data);
-                        if (!(pro >= 6))
-                            return [3 /*break*/, 2];
+                        if (!(pro >= 6)) return [3 /*break*/, 2];
                         // 红色法案生效，执行技能
                         // test
                         console.log("执行技能");
@@ -913,6 +912,13 @@ var Game = (function () {
         gameovermsg.userList = server_2.hList.playerList;
         this.msgServices.pushAll(gameovermsg);
         this.isgameover = true;
+    };
+    // gameOver
+    Game.prototype.restart = function () {
+        var data = new data_1.Data("restart");
+        this.started = false;
+        data.started = this.started;
+        myEmitter_1.myEmitter.emit("Send_Sth", data);
     };
     /**
      * 游戏初始化

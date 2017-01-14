@@ -85,7 +85,7 @@ export class Game {
     this.msgServices.showWho(who);
   }
 
-  start(socketId) {
+  start(skptime) {
     hList.playerList = hList.userList.filter(t => {
       return t.isSeat === true;
     });
@@ -105,16 +105,17 @@ export class Game {
       dataOut.proList = this.proList;
       dataOut.started = this.started;
       dataOut.gametype = this.gametype;
+      this.speakTime = skptime;
       dataOut.speakTime = this.speakTime;
       dataOut.skillnamelist = this.skillnamelist;
       dataOut.isgameover = this.isgameover;
       dataOut.proEffBlue = this.proEffBlue;
       dataOut.proEffRed = this.proEffRed;
       dataOut.voteList = this.voteList;
-      dataOut.user = userService.socketIdToUser[socketId];
       myEmitter.emit("Send_Sth", dataOut);
 
       let gamestartmsg = new Msg("gamestart");
+      gamestartmsg.time = this.speakTime;
       this.msgServices.pushAll(gamestartmsg);
 
 
@@ -211,7 +212,7 @@ export class Game {
           this.fascistCount = 1;
           this.gametype = 1;
           console.log("选择5-6人游戏");
-          this.skillList[0] = this.toKill.bind(this);
+          this.skillList[0] = this.nothing.bind(this);
           this.skillList[1] = this.nothing.bind(this);
           this.skillList[2] = this.toLookPro.bind(this);
           this.skillList[3] = this.toKill.bind(this);
@@ -990,6 +991,16 @@ export class Game {
     this.isgameover = true;
 
   }
+
+  // gameOver
+  restart() {
+    let data = new Data("restart");
+    this.started = false;
+    data.started = this.started;
+    myEmitter.emit("Send_Sth", data);
+  }
+
+
 
 
   /**

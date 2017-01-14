@@ -86,7 +86,10 @@ var MsgServices = (function () {
             var thismsg = this.allPlayerMsgList[i][this.allPlayerMsgList[i].length - 1];
             thismsg.step = n;
             if (msg) {
-                thismsg.msgList.push(msg);
+                var tmplist = msg.split(/\r\n|\r|\n/g);
+                for (var i_1 = 0; i_1 < tmplist.length; i_1++) {
+                    thismsg.msgList.push(tmplist[i_1]);
+                }
             }
             if (i) {
                 myEmitter_1.myEmitter.emit("Updata_msg", this.noToUser[i], thismsg);

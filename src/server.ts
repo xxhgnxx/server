@@ -49,10 +49,29 @@ io.on("connection", socket => {
           userService.userSeat(socket.id);
           break;
         }
+      case "restart":
+        {
+          console.log("restart");
+          // console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
+          game.restart();
+          break;
+        }
+      case "kick":
+        {
+          console.log("kick", data.user);
+          // console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
+          socketIdtoSocket[data.user.socketId].disconnect();
+          userService.kick(data.user.name);
+          let kickdata = new Data("updata");
+          kickdata.playerList = hList.playerList;
+          kickdata.hList = hList;
+          myEmitter.emit("Send_Sth", kickdata);
+          break;
+        }
       case "gamestart":
         {
           console.log(Date().toString().slice(15, 25), "游戏开始");
-          game.start(socket.id);
+          game.start(data.other);
           break;
         }
       case "prmSelect":

@@ -81,10 +81,29 @@ io.on("connection", function (socket) {
                     exports.userService.userSeat(socket.id);
                     break;
                 }
+            case "restart":
+                {
+                    console.log("restart");
+                    // console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
+                    exports.game.restart();
+                    break;
+                }
+            case "kick":
+                {
+                    console.log("kick", data.user);
+                    // console.log(Date().toString().slice(15, 25), "尝试坐下", socket.id);
+                    socketIdtoSocket[data.user.socketId].disconnect();
+                    exports.userService.kick(data.user.name);
+                    var kickdata = new data_1.Data("updata");
+                    kickdata.playerList = exports.hList.playerList;
+                    kickdata.hList = exports.hList;
+                    myEmitter_1.myEmitter.emit("Send_Sth", kickdata);
+                    break;
+                }
             case "gamestart":
                 {
                     console.log(Date().toString().slice(15, 25), "游戏开始");
-                    exports.game.start(socket.id);
+                    exports.game.start(data.other);
                     break;
                 }
             case "prmSelect":
