@@ -1,10 +1,10 @@
-let io = require("socket.io").listen(81);
+import * as socketio from "socket.io";
+let io=socketio.listen(81);
 import { UserService } from "./userService";
 import { Game } from "./game";
 import { User } from "./user";
 import { VoteSys } from "./vote";
 import { Data } from "./data";
-// import { MsgData } from "./data";
 import { Msg } from "./data";
 import { Userlisthgn } from "./userList";
 export let hList: Userlisthgn = new Userlisthgn();
@@ -12,7 +12,7 @@ export let userService = new UserService();
 export let game: Game = new Game();
 import { myEmitter } from "./myEmitter";
 let socketIdtoSocket = new Map();
-let yaml = require("js-yaml");
+import * as yaml from "js-yaml";
 
 
 io.on("connection", socket => {
