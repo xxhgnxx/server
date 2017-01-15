@@ -14,6 +14,7 @@ import { myEmitter } from "./myEmitter";
 let socketIdtoSocket = new Map();
 let yaml = require("js-yaml");
 
+
 io.on("connection", socket => {
   // console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
   socket.emit("ok");

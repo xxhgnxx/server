@@ -6,7 +6,6 @@ import { Msg } from "./hgnmsg";
 import { MsgServices } from "./msg_server";
 import { myEmitter } from "./myEmitter";
 
-
 export class Game {
   // skillList = new Array<Function | string>();  // 技能列表
   isgameover = false;
@@ -677,7 +676,7 @@ export class Game {
 
   // 等待动作结算
   waitSth() {
-    return new Promise(function(resolve) {
+    return new Promise(function (resolve) {
       myEmitter.once("skill_is_done", () => {
         console.log("动作完成");
         resolve();

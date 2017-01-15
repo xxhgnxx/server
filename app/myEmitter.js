@@ -8,7 +8,7 @@ var events_1 = require("events");
 var MyEmitter = (function (_super) {
     __extends(MyEmitter, _super);
     function MyEmitter() {
-        return _super.apply(this, arguments) || this;
+        return _super !== null && _super.apply(this, arguments) || this;
     }
     return MyEmitter;
 }(events_1.EventEmitter));

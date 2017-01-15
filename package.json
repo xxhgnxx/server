@@ -2,7 +2,7 @@
   "name": "server",
   "version": "1.0.0",
   "scripts": {
-    "start": "devtool app/src/server.js"
+    "start": "devtool app/server.js"
   },
   "dependencies": {
     "js-yaml": "^3.7.0",

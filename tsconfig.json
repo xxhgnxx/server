@@ -7,11 +7,10 @@
         "experimentalDecorators": true,
         "removeComments": false,
         "noImplicitAny": false,
+        "lib": [
+            "dom",
+            "es6"
+        ],
         "outDir": "./app"
-    },
-    "compileOnSave": true,
-    "lib": ["dom", "es6"],
-    "include": [
-        "src/**/*"
-    ]
+    }
 }
