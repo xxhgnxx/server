@@ -34,11 +34,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-var io = require("socket.io").listen(81);
+var socketio = require("socket.io");
+var io = socketio.listen(81);
 var userService_1 = require("./userService");
 var game_1 = require("./game");
 var data_1 = require("./data");
-// import { MsgData } from "./data";
 var data_2 = require("./data");
 var userList_1 = require("./userList");
 exports.hList = new userList_1.Userlisthgn();
@@ -48,7 +48,7 @@ var myEmitter_1 = require("./myEmitter");
 var socketIdtoSocket = new Map();
 var yaml = require("js-yaml");
 io.on("connection", function (socket) {
-    // console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
+    console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
     socket.emit("ok");
     socketIdtoSocket[socket.id] = socket;
     socket.on("disconnect", function () {
@@ -141,6 +141,16 @@ io.on("connection", function (socket) {
             case "speak_end":
                 {
                     myEmitter_1.myEmitter.emit("speak_end" + data.user.name);
+                    break;
+                }
+            case "candidate":
+                {
+                    socket.broadcast.emit('system', data);
+                    break;
+                }
+            case "desc":
+                {
+                    socket.broadcast.emit('system', data);
                     break;
                 }
             case "veto_all":

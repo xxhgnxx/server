@@ -1,5 +1,5 @@
 import * as socketio from "socket.io";
-let io=socketio.listen(81);
+let io = socketio.listen(81);
 import { UserService } from "./userService";
 import { Game } from "./game";
 import { User } from "./user";
@@ -16,7 +16,7 @@ import * as yaml from "js-yaml";
 
 
 io.on("connection", socket => {
-  // console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
+  console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
   socket.emit("ok");
   socketIdtoSocket[socket.id] = socket;
   socket.on("disconnect", () => {
@@ -111,6 +111,16 @@ io.on("connection", socket => {
       case "speak_end":
         {
           myEmitter.emit("speak_end" + data.user.name);
+          break;
+        }
+      case "candidate":
+        {
+          socket.broadcast.emit('system', data);
+          break;
+        }
+      case "desc":
+        {
+          socket.broadcast.emit('system', data);
           break;
         }
       case "veto_all":

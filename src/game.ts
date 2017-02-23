@@ -129,7 +129,6 @@ export class Game {
    */
   setPlayer() {
     console.log("分发玩家身份牌,打乱玩家座位，生成新的顺序");
-
     hList.playerList.filter(t => { t.seatNo = Math.random(); });
     hList.playerList.sort((a, b) => { return a.seatNo - b.seatNo; });
     this.hitler = hList.playerList[0];
@@ -139,8 +138,6 @@ export class Game {
       hList.playerList[i].role = "Fascist";
       hList.playerList[i].hitler = this.hitler;
     }
-
-
     if (hList.playerList.length < 7) {
       for (let i = 1; i <= this.fascistCount; i++) {
         this.hitler["fascist" + i.toString()] = JSON.parse(JSON.stringify(hList.playerList[i]));
@@ -151,7 +148,6 @@ export class Game {
         hList.playerList[n]["fascist" + i.toString()] = JSON.parse(JSON.stringify(hList.playerList[i]));
       }
     }
-
     for (let i = this.fascistCount + 1; i < hList.playerList.length; i++) {
       this.liberal.push(hList.playerList[i]);
       hList.playerList[i].role = "Liberal";
