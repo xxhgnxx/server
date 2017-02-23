@@ -69,6 +69,13 @@ io.on("connection", function (socket) {
                     exports.userService.login(socket, data);
                     break;
                 }
+            case "test":
+                {
+                    // console.log(Date().toString().slice(15, 25), "try to login", data.name);
+                    socket.broadcast.emit('system', data);
+                    console.log('测试消息', data);
+                    break;
+                }
             case "quickLogin":
                 {
                     // console.log(Date().toString().slice(15, 25), "try to quickLogin", data.id);
