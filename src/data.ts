@@ -15,7 +15,7 @@ export class Data {
   id: string;
   login: boolean;
   back: boolean;
-
+  fromWho: any;
   // 游戏相关
   target: User;  //  收到影响的玩家
 
@@ -68,7 +68,8 @@ export class Data {
   socketId: string;
   key: string;
   whoIsSpeaking: User;
-  constructor(public type: string, public toWho?: Array<User> | User) { }
+  data: any;
+  constructor(public type: string, public toWho?: any) { }
 }
 
 

@@ -122,12 +122,48 @@ io.on("connection", socket => {
         }
       case "candidate":
         {
-          socket.broadcast.emit('system', data);
+
+
+          // console.log('candidate', data);
+          // console.log(userService.socketIdToUser[<string>data.toWho]);
+          data.toWho = userService.socketIdToUser[<string>data.toWho]
+          myEmitter.emit("Send_Sth", data);
+
+
           break;
         }
       case "desc":
         {
-          socket.broadcast.emit('system', data);
+          console.log('desc', data);
+          let k = data.toWho
+          console.log('data.toWho', k);
+          console.log(userService.socketIdToUser[k]);
+          data.toWho = userService.socketIdToUser[<string>data.toWho]
+          myEmitter.emit("Send_Sth", data);
+          updatauser();
+          break;
+        }
+      case "call":
+        {
+          console.log('来电请求', data);
+          console.log(userService.socketIdToUser[data.data]);
+          userService.socketIdToUser[socket.id].videoFree = false;
+          data.toWho = userService.socketIdToUser[data.data]
+          data.data = socket.id;
+          myEmitter.emit("Send_Sth", data);
+          updatauser();
+          break;
+        }
+      case "answer":
+        {
+          console.log('来电回应', data);
+          if (data.data) {
+            userService.socketIdToUser[socket.id].videoFree = false;
+          } else {
+            userService.socketIdToUser[data.toWho].videoFree = true;
+          }
+          data.toWho = userService.socketIdToUser[data.toWho]
+          socket.broadcast.emit('answer', data);
           break;
         }
       case "veto_all":
@@ -177,6 +213,18 @@ io.on("connection", socket => {
           // dataOut.msgFrom = userService.socketIdToUser[socket.id];
           // dataOut.msg = data.msg;
           // io.emit("system", dataOut);
+          break;
+        }
+      // 测试文字消息
+      case "testMsg":
+        {
+          console.log(socket.id, "发言", data);
+          // let dataOut = new MsgData(userService.socketIdToUser[socket.id]);
+          // dataOut.msgFrom = userService.socketIdToUser[socket.id];
+          // dataOut.msg = data.msg;
+          // io.emit("system", dataOut);
+          io.emit('system', data);
+
           break;
         }
 
@@ -249,6 +297,14 @@ myEmitter.on("speak_start", () => {
   }
 
 });
+
+function updatauser() {
+  let dataOut = new Data("updata");
+  dataOut.hList = hList;
+  myEmitter.emit("Send_Sth", dataOut);
+}
+
+
 
 myEmitter.on("Push_msg", (user: User, msg: Msg) => {
   let data = new Data("Push_msg");

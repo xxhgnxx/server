@@ -152,12 +152,45 @@ io.on("connection", function (socket) {
                 }
             case "candidate":
                 {
-                    socket.broadcast.emit('system', data);
+                    // console.log('candidate', data);
+                    // console.log(userService.socketIdToUser[<string>data.toWho]);
+                    data.toWho = exports.userService.socketIdToUser[data.toWho];
+                    myEmitter_1.myEmitter.emit("Send_Sth", data);
                     break;
                 }
             case "desc":
                 {
-                    socket.broadcast.emit('system', data);
+                    console.log('desc', data);
+                    var k = data.toWho;
+                    console.log('data.toWho', k);
+                    console.log(exports.userService.socketIdToUser[k]);
+                    data.toWho = exports.userService.socketIdToUser[data.toWho];
+                    myEmitter_1.myEmitter.emit("Send_Sth", data);
+                    updatauser();
+                    break;
+                }
+            case "call":
+                {
+                    console.log('来电请求', data);
+                    console.log(exports.userService.socketIdToUser[data.data]);
+                    exports.userService.socketIdToUser[socket.id].videoFree = false;
+                    data.toWho = exports.userService.socketIdToUser[data.data];
+                    data.data = socket.id;
+                    myEmitter_1.myEmitter.emit("Send_Sth", data);
+                    updatauser();
+                    break;
+                }
+            case "answer":
+                {
+                    console.log('来电回应', data);
+                    if (data.data) {
+                        exports.userService.socketIdToUser[socket.id].videoFree = false;
+                    }
+                    else {
+                        exports.userService.socketIdToUser[data.toWho].videoFree = true;
+                    }
+                    data.toWho = exports.userService.socketIdToUser[data.toWho];
+                    socket.broadcast.emit('answer', data);
                     break;
                 }
             case "veto_all":
@@ -199,6 +232,17 @@ io.on("connection", function (socket) {
                     // dataOut.msgFrom = userService.socketIdToUser[socket.id];
                     // dataOut.msg = data.msg;
                     // io.emit("system", dataOut);
+                    break;
+                }
+            // 测试文字消息
+            case "testMsg":
+                {
+                    console.log(socket.id, "发言", data);
+                    // let dataOut = new MsgData(userService.socketIdToUser[socket.id]);
+                    // dataOut.msgFrom = userService.socketIdToUser[socket.id];
+                    // dataOut.msg = data.msg;
+                    // io.emit("system", dataOut);
+                    io.emit('system', data);
                     break;
                 }
             default:
@@ -285,6 +329,11 @@ myEmitter_1.myEmitter.on("speak_start", function () {
         });
     }
 });
+function updatauser() {
+    var dataOut = new data_1.Data("updata");
+    dataOut.hList = exports.hList;
+    myEmitter_1.myEmitter.emit("Send_Sth", dataOut);
+}
 myEmitter_1.myEmitter.on("Push_msg", function (user, msg) {
     var data = new data_1.Data("Push_msg");
     data.msg = msg;

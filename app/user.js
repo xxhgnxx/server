@@ -7,6 +7,7 @@ var User = (function () {
         this.isSurvival = true;
         this.isSeat = false;
         this.seatNo = 0;
+        this.videoFree = true;
         this.isLastPre = false;
         this.isLastPrm = false;
         this.isPre = false;

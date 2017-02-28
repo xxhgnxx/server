@@ -6,6 +6,7 @@ export class User {
   isSeat: boolean = false;
   seatNo: number = 0;
   name: string;
+  videoFree = true;
   hitler: User;
   fascist1: User;
   fascist2: User;

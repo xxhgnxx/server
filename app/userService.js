@@ -10,6 +10,7 @@ var UserService = (function () {
         this.NameToPass = new Map();
         this.idToUsername = new Map();
         this.usernameToId = new Map();
+        // this.test();
     }
     UserService.prototype.login = function (socket, data) {
         var me = server_2.hList.userList.filter(function (t) { return t.name === data.name; })[0];
@@ -34,6 +35,7 @@ var UserService = (function () {
                 this.usernameToId[me.name] = id;
                 this.socketIdToUser[socket.id] = me;
                 me.isOnline = true;
+                me.videoFree = true;
                 me.socketId = socket.id;
                 var dataout = new data_1.Data("loginSuccess", me);
                 dataout.id = id;
@@ -189,6 +191,57 @@ var UserService = (function () {
             text += _printable.charAt(Math.floor(Math.random() * _printable.length));
         }
         return text;
+    };
+    UserService.prototype.test = function () {
+        var tmpuser = new user_1.User("红队测试员#1");
+        tmpuser.role = "red";
+        this.addtestuser(tmpuser);
+        tmpuser = new user_1.User("蓝队测试员#1");
+        tmpuser.role = "blue";
+        this.addtestuser(tmpuser);
+        tmpuser = new user_1.User("绿队测试员#1");
+        tmpuser.role = "green";
+        this.addtestuser(tmpuser);
+        tmpuser = new user_1.User("无队测试员#1");
+        tmpuser.role = "x";
+        this.addtestuser(tmpuser);
+        tmpuser = new user_1.User("红队测试员#2");
+        tmpuser.isOnline = false;
+        tmpuser.role = "red";
+        this.addtestuser(tmpuser);
+        tmpuser = new user_1.User("蓝队测试员#2");
+        tmpuser.isOnline = false;
+        tmpuser.role = "blue";
+        this.addtestuser(tmpuser);
+        tmpuser = new user_1.User("绿队测试员#2");
+        tmpuser.isOnline = false;
+        tmpuser.role = "green";
+        this.addtestuser(tmpuser);
+        tmpuser = new user_1.User("无队测试员#2");
+        tmpuser.isOnline = false;
+        tmpuser.role = "x";
+        this.addtestuser(tmpuser);
+        tmpuser = new user_1.User("红队测试员#3");
+        tmpuser.role = "red";
+        this.addtestuser(tmpuser);
+        tmpuser = new user_1.User("蓝队测试员#3");
+        tmpuser.role = "blue";
+        this.addtestuser(tmpuser);
+        tmpuser = new user_1.User("绿队测试员#3");
+        tmpuser.role = "green";
+        this.addtestuser(tmpuser);
+        tmpuser = new user_1.User("无队测试员#3");
+        tmpuser.role = "x";
+        this.addtestuser(tmpuser);
+    };
+    UserService.prototype.addtestuser = function (user) {
+        var id = this.idgen();
+        this.socketIdToUser[id] = user;
+        this.socketIdToUser[id].socketId = id;
+        this.NameToPass[user.name] = user.password;
+        this.idToUsername[id] = this.socketIdToUser[id].name;
+        this.usernameToId[this.socketIdToUser[id].name] = id;
+        server_2.hList.userList.push(this.socketIdToUser[id]);
     };
     return UserService;
 }());

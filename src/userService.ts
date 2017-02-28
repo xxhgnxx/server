@@ -1,4 +1,4 @@
-import { User }  from "./user";
+import { User } from "./user";
 import { game } from "./server";
 import { Data } from "./data";
 import { hList } from "./server";
@@ -12,7 +12,7 @@ export class UserService {
   idToUsername = new Map<string, string>();
   usernameToId = new Map<string, string>();
   constructor() {
-
+    // this.test();
   }
 
   login(socket, data: Data) {
@@ -38,6 +38,7 @@ export class UserService {
         this.usernameToId[me.name] = id;
         this.socketIdToUser[socket.id] = me;
         me.isOnline = true;
+        me.videoFree = true;
         me.socketId = socket.id;
         let dataout = new Data("loginSuccess", me);
         dataout.id = id;
@@ -210,9 +211,64 @@ export class UserService {
     return text;
   }
 
+  test() {
+    let tmpuser = new User("红队测试员#1");
+    tmpuser.role = "red";
+    this.addtestuser(tmpuser);
+    tmpuser = new User("蓝队测试员#1");
+    tmpuser.role = "blue";
+    this.addtestuser(tmpuser);
+    tmpuser = new User("绿队测试员#1");
+    tmpuser.role = "green";
+    this.addtestuser(tmpuser);
+    tmpuser = new User("无队测试员#1");
+    tmpuser.role = "x";
+    this.addtestuser(tmpuser);
+
+    tmpuser = new User("红队测试员#2");
+    tmpuser.isOnline = false;
+    tmpuser.role = "red";
+    this.addtestuser(tmpuser);
+    tmpuser = new User("蓝队测试员#2");
+    tmpuser.isOnline = false;
+    tmpuser.role = "blue";
+    this.addtestuser(tmpuser);
+    tmpuser = new User("绿队测试员#2");
+    tmpuser.isOnline = false;
+    tmpuser.role = "green";
+    this.addtestuser(tmpuser);
+    tmpuser = new User("无队测试员#2");
+    tmpuser.isOnline = false;
+    tmpuser.role = "x";
+    this.addtestuser(tmpuser);
+
+    tmpuser = new User("红队测试员#3");
+    tmpuser.role = "red";
+    this.addtestuser(tmpuser);
+    tmpuser = new User("蓝队测试员#3");
+    tmpuser.role = "blue";
+    this.addtestuser(tmpuser);
+    tmpuser = new User("绿队测试员#3");
+    tmpuser.role = "green";
+    this.addtestuser(tmpuser);
+    tmpuser = new User("无队测试员#3");
+    tmpuser.role = "x";
+    this.addtestuser(tmpuser);
+
+  }
 
 
 
+  addtestuser(user: User) {
+    let id = this.idgen();
+
+    this.socketIdToUser[id] = user
+    this.socketIdToUser[id].socketId = id;
+    this.NameToPass[user.name] = user.password;
+    this.idToUsername[id] = this.socketIdToUser[id].name;
+    this.usernameToId[this.socketIdToUser[id].name] = id;
+    hList.userList.push(this.socketIdToUser[id]);
+  }
 
 }
 
