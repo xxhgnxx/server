@@ -1,5 +1,5 @@
-import * as socketio from "socket.io";
-let io = socketio.listen(81);
+// import * as socketio from "socket.io";
+// let io = socketio.listen(81);
 import { UserService } from "./userService";
 import { Game } from "./game";
 import { User } from "./user";
@@ -13,6 +13,37 @@ export let game: Game = new Game();
 import { myEmitter } from "./myEmitter";
 let socketIdtoSocket = new Map();
 import * as yaml from "js-yaml";
+
+let express = require('express');
+var fs = require('fs');
+let app = express();
+
+var https = require('https');
+var privateKey = fs.readFileSync('./app/yourkey.pem', 'utf8');
+var certificate = fs.readFileSync('./app/yourcert.pem', 'utf8');
+var credentials = { key: privateKey, cert: certificate };
+
+var httpsServer = https.createServer(credentials, app);
+
+var SSLPORT = 88;
+
+httpsServer.listen(SSLPORT, function () {
+    console.log('HTTPS Server is running on: https://localhost:%s', SSLPORT);
+});
+
+
+// let server = require('http').createServer(app);
+let io = require('socket.io').listen(httpsServer);
+// let io = require('socket.io').listen(88);
+// let port = process.env.PORT || 8000;
+// server.listen(port);
+app.use(express.static(__dirname + '/'));
+
+app.get('/', function (req, res) {
+    res.sendfile(__dirname + '/index.html');
+});
+
+
 
 
 io.on("connection", socket => {

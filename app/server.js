@@ -35,8 +35,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-var socketio = require("socket.io");
-var io = socketio.listen(81);
+// import * as socketio from "socket.io";
+// let io = socketio.listen(81);
 var userService_1 = require("./userService");
 var game_1 = require("./game");
 var data_1 = require("./data");
@@ -48,6 +48,27 @@ exports.game = new game_1.Game();
 var myEmitter_1 = require("./myEmitter");
 var socketIdtoSocket = new Map();
 var yaml = require("js-yaml");
+var express = require('express');
+var fs = require('fs');
+var app = express();
+var https = require('https');
+var privateKey = fs.readFileSync('./app/yourkey.pem', 'utf8');
+var certificate = fs.readFileSync('./app/yourcert.pem', 'utf8');
+var credentials = { key: privateKey, cert: certificate };
+var httpsServer = https.createServer(credentials, app);
+var SSLPORT = 88;
+httpsServer.listen(SSLPORT, function () {
+    console.log('HTTPS Server is running on: https://localhost:%s', SSLPORT);
+});
+// let server = require('http').createServer(app);
+var io = require('socket.io').listen(httpsServer);
+// let io = require('socket.io').listen(88);
+// let port = process.env.PORT || 8000;
+// server.listen(port);
+app.use(express.static(__dirname + '/'));
+app.get('/', function (req, res) {
+    res.sendfile(__dirname + '/index.html');
+});
 io.on("connection", function (socket) {
     console.log(Date().toString().slice(15, 25), "有人连接", socket.id);
     socket.emit("ok");

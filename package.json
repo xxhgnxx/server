@@ -5,6 +5,7 @@
     "start": "devtool app/server.js"
   },
   "dependencies": {
+    "express": "^4.15.2",
     "js-yaml": "^3.7.0",
     "socket.io": "^1.7.2"
   },
