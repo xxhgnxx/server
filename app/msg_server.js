@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var user_1 = require("./user");
 var server_1 = require("./server");
 var myEmitter_1 = require("./myEmitter");
@@ -93,6 +94,7 @@ var MsgServices = (function () {
             }
             if (i) {
                 myEmitter_1.myEmitter.emit("Updata_msg", this.noToUser[i], thismsg);
+                // console.log(this.noToUser[i], thismsg);
             }
         }
         for (var i = 0; i < server_1.hList.userList.length; i++) {

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var Data = (function () {
     function Data(type, toWho) {
         this.type = type;

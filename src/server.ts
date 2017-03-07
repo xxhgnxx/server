@@ -148,8 +148,22 @@ io.on("connection", socket => {
           console.log('来电请求', data);
           console.log(userService.socketIdToUser[data.data]);
           userService.socketIdToUser[socket.id].videoFree = false;
+          userService.socketIdToUser[data.data].videoFree = false;
           data.toWho = userService.socketIdToUser[data.data]
           data.data = socket.id;
+          myEmitter.emit("Send_Sth", data);
+          updatauser();
+          break;
+        }
+      case "rtcend":
+        {
+          console.log('结束通话', data);
+          console.log(userService.socketIdToUser[data.data]);
+          userService.socketIdToUser[socket.id].videoFree = true;
+          userService.socketIdToUser[data.data].videoFree = true;
+          data.toWho = userService.socketIdToUser[data.data]
+          console.log(data);
+          
           myEmitter.emit("Send_Sth", data);
           updatauser();
           break;
@@ -159,11 +173,14 @@ io.on("connection", socket => {
           console.log('来电回应', data);
           if (data.data) {
             userService.socketIdToUser[socket.id].videoFree = false;
+            userService.socketIdToUser[data.toWho].videoFree = false;
           } else {
             userService.socketIdToUser[data.toWho].videoFree = true;
+            userService.socketIdToUser[socket.id].videoFree = true;
           }
-          data.toWho = userService.socketIdToUser[data.toWho]
-          socket.broadcast.emit('answer', data);
+          socketIdtoSocket[data.toWho].emit("answer", data);
+
+          updatauser();
           break;
         }
       case "veto_all":

@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 // 用户 数据结构
 var User = (function () {
     function User(name) {
@@ -18,6 +19,7 @@ var User = (function () {
         this.role = "x";
         this.canBeSelect = true;
         this.name = name;
+        this.headPic = Math.round(Math.random() * 12);
     }
     return User;
 }());

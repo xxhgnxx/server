@@ -7,6 +7,7 @@ export class User {
   seatNo: number = 0;
   name: string;
   videoFree = true;
+  headPic:number
   hitler: User;
   fascist1: User;
   fascist2: User;
@@ -24,5 +25,6 @@ export class User {
   lastVote: number;  // 最后一次生效的投票情况
   constructor(name: string) {
     this.name = name;
+    this.headPic = Math.round(Math.random() * 12);
   }
 }

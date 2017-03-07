@@ -1,4 +1,5 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 var VoteSys = (function () {
     function VoteSys() {
         this.voteList = new Array();

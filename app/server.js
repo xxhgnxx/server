@@ -34,6 +34,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 var socketio = require("socket.io");
 var io = socketio.listen(81);
 var userService_1 = require("./userService");
@@ -174,8 +175,21 @@ io.on("connection", function (socket) {
                     console.log('来电请求', data);
                     console.log(exports.userService.socketIdToUser[data.data]);
                     exports.userService.socketIdToUser[socket.id].videoFree = false;
+                    exports.userService.socketIdToUser[data.data].videoFree = false;
                     data.toWho = exports.userService.socketIdToUser[data.data];
                     data.data = socket.id;
+                    myEmitter_1.myEmitter.emit("Send_Sth", data);
+                    updatauser();
+                    break;
+                }
+            case "rtcend":
+                {
+                    console.log('结束通话', data);
+                    console.log(exports.userService.socketIdToUser[data.data]);
+                    exports.userService.socketIdToUser[socket.id].videoFree = true;
+                    exports.userService.socketIdToUser[data.data].videoFree = true;
+                    data.toWho = exports.userService.socketIdToUser[data.data];
+                    console.log(data);
                     myEmitter_1.myEmitter.emit("Send_Sth", data);
                     updatauser();
                     break;
@@ -185,12 +199,14 @@ io.on("connection", function (socket) {
                     console.log('来电回应', data);
                     if (data.data) {
                         exports.userService.socketIdToUser[socket.id].videoFree = false;
+                        exports.userService.socketIdToUser[data.toWho].videoFree = false;
                     }
                     else {
                         exports.userService.socketIdToUser[data.toWho].videoFree = true;
+                        exports.userService.socketIdToUser[socket.id].videoFree = true;
                     }
-                    data.toWho = exports.userService.socketIdToUser[data.toWho];
-                    socket.broadcast.emit('answer', data);
+                    socketIdtoSocket[data.toWho].emit("answer", data);
+                    updatauser();
                     break;
                 }
             case "veto_all":

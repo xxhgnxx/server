@@ -34,6 +34,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+Object.defineProperty(exports, "__esModule", { value: true });
 var server_1 = require("./server");
 var server_2 = require("./server");
 var data_1 = require("./data");
@@ -465,6 +466,7 @@ var Game = (function () {
             var proTmp = [];
             if (this.proIndex < 2) {
                 this.shuffle();
+                // todo 洗牌通知
             }
             for (var n = this.proIndex; n >= this.proIndex - 2; n--) {
                 proTmp.push(this.proList[n]);
@@ -566,6 +568,7 @@ var Game = (function () {
                     chooseProMsg2.proX3List[1] = list[0];
                     chooseProMsg2.proX3List[0] = [proDiscard];
                     this.msgServices.updataWho(this.pre, chooseProMsg2);
+                    // todo
                 }
             }
             else {
@@ -848,6 +851,7 @@ var Game = (function () {
             if (player.role === "Hitler") {
                 console.log("游戏结束");
                 this.gameover("游戏结束，蓝色胜利");
+                // todo
             }
             else {
                 // 枪毙的是下届总统时，切换下届总统
